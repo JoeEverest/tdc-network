@@ -8,6 +8,7 @@ import { Dashboard } from './components/Dashboard';
 import { ProfileSetupNew } from './components/ProfileSetupNew';
 import { MembersNew } from './components/MembersNew';
 import { JobsNew } from './components/JobsNew';
+import { JobPost } from './components/JobPost';
 import { EndorsementsNew } from './components/EndorsementsNew';
 import { useApiClient } from './lib/api';
 
@@ -27,6 +28,7 @@ function AuthenticatedApp() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="members" element={<MembersNew />} />
         <Route path="jobs" element={<JobsNew />} />
+        <Route path="jobs/new" element={<JobPost />} />
         <Route path="endorsements" element={<EndorsementsNew />} />
       </Route>
     </Routes>

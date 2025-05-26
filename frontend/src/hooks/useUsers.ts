@@ -33,10 +33,10 @@ export const useUser = (userId: string) => {
 };
 
 // Search users with filters
-export const useUsers = (filters: SearchFilters = {}) => {
+export const useUsers = () => {
 	return useQuery({
-		queryKey: userKeys.list(filters),
-		queryFn: () => userService.searchUsers(filters),
+		queryKey: userKeys.all,
+		queryFn: () => userService.getAllUsers(),
 		staleTime: 2 * 60 * 1000, // 2 minutes
 		keepPreviousData: true,
 	});

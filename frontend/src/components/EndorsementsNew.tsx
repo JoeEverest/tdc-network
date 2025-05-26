@@ -17,7 +17,6 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useUser } from '@clerk/clerk-react';
 import {
     useUserEndorsements,
     useUserGivenEndorsements,
@@ -25,6 +24,7 @@ import {
     useCanEndorse
 } from '../hooks/useEndorsements';
 import { useProfile, useUsers } from '../hooks/useUsers';
+import { User as UserType } from '../types';
 
 const skillOptions = [
     'React', 'TypeScript', 'Node.js', 'Python', 'Go', 'Java',
@@ -76,7 +76,7 @@ export function EndorsementsNew() {
     const createEndorsementMutation = useCreateEndorsement();
 
     // Handle member selection
-    const handleMemberSelect = (user: any) => {
+    const handleMemberSelect = (user: UserType) => {
         setEndorseForm(prev => ({
             ...prev,
             memberName: user.name,
@@ -91,10 +91,8 @@ export function EndorsementsNew() {
         try {
             await createEndorsementMutation.mutateAsync({
                 endorserId: currentUser._id,
-                userId: endorseForm.userId,
+                endorseeId: endorseForm.userId,
                 skillId: endorseForm.skill, // In a real app, this would be a skill ID
-                rating: endorseForm.rating,
-                comment: endorseForm.comment || undefined
             });
 
             // Reset form and close
@@ -109,7 +107,12 @@ export function EndorsementsNew() {
     const getSkillStats = () => {
         if (!userEndorsements || userEndorsements.length === 0) return [];
 
-        const skillCounts = userEndorsements.reduce((acc: Record<string, any>, endorsement: any) => {
+        interface SkillData {
+            count: number;
+            ratings: number[];
+        }
+
+        const skillCounts = userEndorsements.reduce((acc: Record<string, SkillData>, endorsement: any) => { // TODO: Fix Endorsement type mismatch
             const skillName = typeof endorsement.skill === 'string'
                 ? endorsement.skill
                 : endorsement.skill?.name || 'Unknown';
@@ -122,7 +125,7 @@ export function EndorsementsNew() {
             return acc;
         }, {});
 
-        return Object.entries(skillCounts).map(([skill, data]: [string, any]) => ({
+        return Object.entries(skillCounts).map(([skill, data]: [string, SkillData]) => ({
             skill,
             count: data.count,
             averageRating: data.ratings.reduce((a: number, b: number) => a + b, 0) / data.ratings.length
@@ -246,7 +249,7 @@ export function EndorsementsNew() {
                             {/* Search Results */}
                             {endorseForm.memberName && searchResults.length > 0 && !endorseForm.userId && (
                                 <div className="mt-2 border rounded-md bg-white shadow-sm max-h-40 overflow-y-auto">
-                                    {searchResults.slice(0, 5).map((user: any) => (
+                                    {searchResults.slice(0, 5).map((user: UserType) => (
                                         <button
                                             key={user._id}
                                             onClick={() => handleMemberSelect(user)}
@@ -361,7 +364,7 @@ export function EndorsementsNew() {
 
                 <TabsContent value="received" className="p-6">
                     <div className="space-y-4">
-                        {userEndorsements.map((endorsement: any, index: number) => (
+                        {userEndorsements.map((endorsement: any, index: number) => ( // TODO: Fix Endorsement type
                             <motion.div
                                 key={endorsement._id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -422,7 +425,7 @@ export function EndorsementsNew() {
 
                 <TabsContent value="given" className="p-6">
                     <div className="space-y-4">
-                        {givenEndorsements.map((endorsement: any, index: number) => (
+                        {givenEndorsements.map((endorsement: any, index: number) => ( // TODO: Fix Endorsement type
                             <motion.div
                                 key={endorsement._id}
                                 initial={{ opacity: 0, y: 20 }}

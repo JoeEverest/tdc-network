@@ -28,16 +28,16 @@ export function Members() {
     const [showEndorsedOnly, setShowEndorsedOnly] = React.useState(false);
 
     // Create search filters object
-    const filters: SearchFilters = React.useMemo(() => ({
-        skills: selectedSkills.length > 0 ? selectedSkills.map(skillName => ({
-            skillId: skillName, // For now using skill name as ID
-            minRating: minRating > 1 ? minRating : undefined,
-        })) : undefined,
-        availableForHire: showAvailableOnly ? true : undefined,
-    }), [selectedSkills, minRating, showAvailableOnly]);
+    // const filters: SearchFilters = React.useMemo(() => ({
+    //     skills: selectedSkills.length > 0 ? selectedSkills.map(skillName => ({
+    //         skillId: skillName, // For now using skill name as ID
+    //         minRating: minRating > 1 ? minRating : undefined,
+    //     })) : undefined,
+    //     availableForHire: showAvailableOnly ? true : undefined,
+    // }), [selectedSkills, minRating, showAvailableOnly]);
 
     // Use React Query hook to fetch users
-    const { data: members = [], isLoading, error } = useUsers(filters);
+    const { data: members = [], isLoading, error } = useUsers();
 
     const handleAvailabilityChange = (checked: boolean | "indeterminate") => {
         setShowAvailableOnly(checked === true);

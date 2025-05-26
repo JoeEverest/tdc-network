@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,9 +20,10 @@ import {
 import { motion } from 'motion/react';
 import { useJobs, useApplyToJob, useUserApplications } from '../hooks/useJobs';
 import { useProfile } from '../hooks/useUsers';
-import { Job, JobSearchFilters } from '../types';
+import { Job, JobRequirement, Application, JobSearchFilters } from '../types';
 
 export function JobsNew() {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = React.useState('');
     const [selectedSkills, setSelectedSkills] = React.useState<string[]>([]);
     const [showRemoteOnly, setShowRemoteOnly] = React.useState(false);
@@ -80,24 +82,30 @@ export function JobsNew() {
 
     // Check if user can apply to a job based on their skills
     const canApplyToJob = (job: Job) => {
-        if (!currentUser?.skills) return false;
+        console.log(job);
 
-        // Get user's skills with ratings
-        const userSkills = currentUser.skills.reduce((acc: Record<string, number>, skill: any) => {
-            const skillName = typeof skill.skill === 'string' ? skill.skill : skill.skill.name;
-            acc[skillName] = skill.rating;
-            return acc;
-        }, {});
+        return true
+        // if (!currentUser?.skills) return false;
 
-        // Check if user meets minimum requirements for all required skills
-        return job.requirements
-            .filter((req) => req.required)
-            .every((req) => userSkills[req.skillName] >= req.minimumRating);
+        // // Get user's skills with ratings
+        // const userSkills = currentUser.skills.reduce((acc: Record<string, number>, skill: UserSkill) => {
+        //     const skillName = typeof skill.skill === 'string' ? skill.skill : skill.skill.name;
+        //     acc[skillName] = skill.rating;
+        //     return acc;
+        // }, {});
+
+        // // Check if user meets minimum requirements for all required skills
+        // return job.requirements
+        //     .filter((req) => req.required)
+        //     .every((req) => {
+        //         const skillName = req.skillName || req.skill.name;
+        //         return userSkills[skillName] >= req.minimumRating;
+        //     });
     };
 
     // Check if user has already applied to this job
     const hasApplied = (jobId: string) => {
-        return userApplications.some((app: any) => app.job === jobId || app.job._id === jobId);
+        return userApplications.some((app: Application) => app.jobId === jobId);
     };
 
     // Handle job application
@@ -148,7 +156,10 @@ export function JobsNew() {
                         Discover opportunities that match your skills
                     </p>
                 </div>
-                <Button className="self-start sm:self-auto">
+                <Button
+                    className="self-start sm:self-auto"
+                    onClick={() => navigate('/jobs/new')}
+                >
                     <Plus className="h-4 w-4 mr-2" />
                     Post a Job
                 </Button>
@@ -248,7 +259,7 @@ export function JobsNew() {
                         <Checkbox
                             id="remote"
                             checked={showRemoteOnly}
-                            onCheckedChange={setShowRemoteOnly}
+                            onCheckedChange={(checked) => setShowRemoteOnly(checked === true)}
                         />
                         <Label htmlFor="remote" className="text-sm">
                             Remote jobs only
@@ -259,9 +270,9 @@ export function JobsNew() {
 
             {/* Job Listings */}
             <div className="space-y-4">
-                {jobs.map((job: any, index: number) => (
+                {jobs.map((job: Job, index: number) => (
                     <motion.div
-                        key={job._id}
+                        key={job._id || job.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -278,7 +289,7 @@ export function JobsNew() {
                                                 Remote
                                             </span>
                                         )}
-                                        {hasApplied(job._id) ? (
+                                        {hasApplied(job._id || job.id) ? (
                                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 Applied
                                             </span>
@@ -298,7 +309,7 @@ export function JobsNew() {
                                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                                     <div className="flex items-center gap-1">
                                         <Building className="h-4 w-4" />
-                                        {job.company}
+                                        {job?.company || job.contactInfo?.company}
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <MapPin className="h-4 w-4" />
@@ -325,16 +336,12 @@ export function JobsNew() {
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-900 mb-2">Required Skills</h4>
                                         <div className="flex flex-wrap gap-2">
-                                            {job.requirements.map((req: any, reqIndex: number) => (
+                                            {job.requirements.map((req: JobRequirement, reqIndex: number) => (
                                                 <span
                                                     key={reqIndex}
-                                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${req.required
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
-                                                        }`}
+                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                                                 >
-                                                    {req.skillName} ({req.minimumRating}/10)
-                                                    {req.required ? ' *' : ''}
+                                                    {req.skill} ({req.minRating}/10)
                                                 </span>
                                             ))}
                                         </div>
@@ -344,7 +351,7 @@ export function JobsNew() {
 
                             {/* Action Buttons */}
                             <div className="flex flex-col gap-2 lg:w-auto w-full">
-                                {hasApplied(job._id) ? (
+                                {hasApplied(job._id || job.id) ? (
                                     <Button
                                         className="w-full lg:w-auto"
                                         variant="outline"
@@ -356,7 +363,7 @@ export function JobsNew() {
                                     <Button
                                         className="w-full lg:w-auto"
                                         disabled={!canApplyToJob(job) || applyToJobMutation.isLoading}
-                                        onClick={() => handleApplyToJob(job._id)}
+                                        onClick={() => handleApplyToJob(job._id || job.id)}
                                     >
                                         {applyToJobMutation.isLoading ? (
                                             <>
@@ -399,13 +406,13 @@ export function JobsNew() {
                     </div>
                     <div>
                         <div className="text-2xl font-bold text-green-600">
-                            {jobs.filter((job: any) => canApplyToJob(job)).length}
+                            {jobs.filter((job: Job) => canApplyToJob(job)).length}
                         </div>
                         <div className="text-sm text-gray-600">Jobs You Can Apply To</div>
                     </div>
                     <div>
                         <div className="text-2xl font-bold text-purple-600">
-                            {jobs.filter((job: any) => job.isRemote).length}
+                            {jobs.filter((job: Job) => job.isRemote).length}
                         </div>
                         <div className="text-sm text-gray-600">Remote Opportunities</div>
                     </div>

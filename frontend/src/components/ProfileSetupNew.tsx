@@ -106,7 +106,7 @@ export function ProfileSetupNew() {
                 skills: formData.skills.map(skill => ({
                     skill: skill.name, // In a real app, this might be a skill ID
                     rating: skill.rating,
-                    category: skill.category
+                    endorsements: [] // Initialize with empty endorsements array
                 }))
             };
 

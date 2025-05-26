@@ -36,6 +36,7 @@ export interface Endorsement {
 
 export interface Job {
 	id: string;
+	_id?: string; // For backward compatibility
 	authorId: string;
 	title: string;
 	description: string;
@@ -45,6 +46,7 @@ export interface Job {
 		phone?: string;
 		company?: string;
 	};
+	company?: string; // For backward compatibility
 	location?: string;
 	isRemote: boolean;
 	salaryRange?: {
@@ -59,10 +61,8 @@ export interface Job {
 }
 
 export interface JobRequirement {
-	skillId: string;
-	minimumRating: number;
-	required: boolean;
-	skill: Skill;
+	minRating: number;
+	skill: string;
 }
 
 export interface SearchFilters {
@@ -74,6 +74,7 @@ export interface SearchFilters {
 	availableForHire?: boolean;
 	location?: string;
 	isRemote?: boolean;
+	search?: string;
 }
 
 export interface JobFilters {
@@ -82,6 +83,11 @@ export interface JobFilters {
 	isRemote?: boolean;
 	salaryMin?: number;
 	salaryMax?: number;
+	search?: string;
+	salaryRange?: {
+		min: number;
+		max: number;
+	};
 }
 
 // API Response types
@@ -125,7 +131,7 @@ export interface UpdateUserData {
 export interface CreateJobData {
 	title: string;
 	description: string;
-	requirements: JobRequirement[];
+	requiredSkills: JobRequirement[];
 	contactInfo: {
 		email: string;
 		phone?: string;
