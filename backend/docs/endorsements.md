@@ -1,11 +1,13 @@
 # Endorsements API Documentation
 
 ## Base Path
+
 `/endorsements`
 
 ---
 
 ## Authentication
+
 Most routes require authentication via Clerk. The authenticated user's Clerk ID is used to identify the user in the database.
 
 ---
@@ -13,11 +15,13 @@ Most routes require authentication via Clerk. The authenticated user's Clerk ID 
 ## Endpoints
 
 ### POST `/endorsements`
+
 Create a new endorsement for another user's skill.
 
 **Authentication Required:** Yes
 
 **Request Body:**
+
 ```
 {
   "endorsedUserId": "string", // Clerk ID of user being endorsed
@@ -26,6 +30,7 @@ Create a new endorsement for another user's skill.
 ```
 
 **Response:**
+
 ```
 {
   "_id": "string",
@@ -37,6 +42,7 @@ Create a new endorsement for another user's skill.
 ```
 
 **Status Codes:**
+
 - 201: Endorsement created successfully
 - 400: Missing required fields or cannot endorse yourself
 - 404: User or skill not found
@@ -46,21 +52,24 @@ Create a new endorsement for another user's skill.
 ---
 
 ### GET `/endorsements/for/:userId`
+
 Get all endorsements received by a specific user.
 
 **Authentication Required:** No
 
 **URL Parameters:**
+
 - `userId`: Clerk ID of the user whose endorsements to retrieve
 
 **Response:**
+
 ```
 [
   {
     "_id": "string",
     "skill": {
       "_id": "string",
-      "name": "string" 
+      "name": "string"
     },
     "endorsedUser": {
       "_id": "string",
@@ -76,6 +85,7 @@ Get all endorsements received by a specific user.
 ```
 
 **Status Codes:**
+
 - 200: Success
 - 404: User not found
 - 500: Server error
@@ -83,17 +93,20 @@ Get all endorsements received by a specific user.
 ---
 
 ### GET `/endorsements/by/:userId`
+
 Get all endorsements given by a specific user.
 
 **Authentication Required:** No
 
 **URL Parameters:**
+
 - `userId`: Clerk ID of the user whose given endorsements to retrieve
 
 **Response:**
 Same format as GET `/endorsements/for/:userId`
 
 **Status Codes:**
+
 - 200: Success
 - 404: User not found
 - 500: Server error
@@ -101,14 +114,17 @@ Same format as GET `/endorsements/for/:userId`
 ---
 
 ### DELETE `/endorsements/:endorsementId`
+
 Delete an endorsement. Only the user who gave the endorsement can delete it.
 
 **Authentication Required:** Yes
 
 **URL Parameters:**
+
 - `endorsementId`: MongoDB ObjectId of the endorsement to delete
 
 **Response:**
+
 ```
 {
   "message": "Endorsement deleted successfully"
@@ -116,6 +132,7 @@ Delete an endorsement. Only the user who gave the endorsement can delete it.
 ```
 
 **Status Codes:**
+
 - 200: Success
 - 403: Not authorized to delete this endorsement
 - 404: Endorsement not found
@@ -124,6 +141,7 @@ Delete an endorsement. Only the user who gave the endorsement can delete it.
 ---
 
 ## Notes
+
 - Users cannot endorse themselves
 - Users can only endorse skills that exist in the endorsed user's profile
 - A user can only endorse another user once per skill

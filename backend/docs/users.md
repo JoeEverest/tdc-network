@@ -1,11 +1,13 @@
 # User API Documentation
 
 ## Base Path
+
 `/user`
 
 ---
 
 ## Authentication
+
 Most routes require authentication via Clerk. The authenticated user's Clerk ID is used to identify the user in the database.
 
 ---
@@ -13,6 +15,7 @@ Most routes require authentication via Clerk. The authenticated user's Clerk ID 
 ## Endpoints
 
 ### GET `/user`
+
 Get all users (public profiles only).
 
 **Authentication Required:** No
@@ -49,6 +52,7 @@ Get all users (public profiles only).
 ---
 
 ### GET `/user/:userId`
+
 Get a specific user's public profile by their Clerk ID.
 
 **Authentication Required:** No
@@ -114,7 +118,7 @@ Get the current user's profile. If the user does not exist, a new user is create
     }
   ],
   "availableForHire": "boolean",
-  "contactInfo": { 
+  "contactInfo": {
     "email": "string",
     "phone": "string"
   },
@@ -137,7 +141,7 @@ Update the current user's profile info.
 {
   "name": "string",
   "availableForHire": "boolean",
-  "contactInfo": { 
+  "contactInfo": {
     "email": "string",
     "phone": "string"
   }
@@ -256,6 +260,7 @@ Search for users based on their skills and rating ranges.
 ---
 
 ## Notes
+
 - All responses return the full user object after the operation.
 - Skill ratings must be between 1 and 10.
 - Skills are referenced by ObjectId.
