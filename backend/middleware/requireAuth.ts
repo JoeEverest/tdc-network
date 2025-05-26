@@ -1,4 +1,25 @@
-import { requireAuth as clerkRequireAuth } from "@clerk/express";
+import { Request, Response, NextFunction } from "express";
+import { getAuth } from "@clerk/express";
 
-// Export the requireAuth middleware
-export const requireAuth = clerkRequireAuth();
+// Custom auth middleware for API endpoints that returns JSON instead of redirecting
+export const requireAuth = (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const { userId } = getAuth(req);
+
+		console.log("Authenticated user ID:", userId);
+
+		if (!userId) {
+			return res.status(401).json({ error: "Unauthorized" });
+		}
+
+		// User is authenticated, continue
+		next();
+	} catch (error) {
+		console.error("Auth error:", error);
+		return res.status(401).json({ error: "Unauthorized" });
+	}
+};

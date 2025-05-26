@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { requireAuth } from "@clerk/express";
+import { requireAuth } from "../middleware/requireAuth";
 import { getAuth } from "@clerk/express";
 import { User, Skill } from "../models";
 import mongoose from "mongoose";
@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 const router = express.Router();
 
 // GET /me - Get current user profile
-router.get("/me", requireAuth(), async (req: Request, res: Response) => {
+router.get("/me", requireAuth, async (req: Request, res: Response) => {
   try {
     const { userId } = getAuth(req);
 
@@ -67,7 +67,7 @@ router.get("/:userId", async (req, res) => {
 });
 
 // PUT /me - Update profile info (name, availableForHire, contactInfo)
-router.put("/me", requireAuth(), async (req: Request, res: Response) => {
+router.put("/me", requireAuth, async (req: Request, res: Response) => {
   try {
     const { userId } = getAuth(req);
 
@@ -94,50 +94,46 @@ router.put("/me", requireAuth(), async (req: Request, res: Response) => {
 });
 
 // POST /me/skills - Add a skill (by name, with rating)
-router.post(
-  "/me/skills",
-  requireAuth(),
-  async (req: Request, res: Response) => {
-    try {
-      const { userId } = getAuth(req);
+router.post("/me/skills", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { userId } = getAuth(req);
 
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      const { skillName, rating } = req.body;
-      let skill = await Skill.findOne({ name: skillName });
-      if (!skill) {
-        skill = await Skill.create({ name: skillName });
-      }
-      const user = await User.findOneAndUpdate(
-        { clerkId: userId, "skills.skill": { $ne: skill._id } },
-        {
-          $push: {
-            skills: { skill: skill._id, rating, endorsements: [] },
-          },
-        },
-        { new: true },
-      );
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({ error: "User not found or skill already exists" });
-      }
-
-      res.json(user);
-    } catch (error) {
-      console.error("Error adding skill:", error);
-      res.status(500).json({ error: "Failed to add skill" });
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
-  },
-);
+
+    const { skillName, rating } = req.body;
+    let skill = await Skill.findOne({ name: skillName });
+    if (!skill) {
+      skill = await Skill.create({ name: skillName });
+    }
+    const user = await User.findOneAndUpdate(
+      { clerkId: userId, "skills.skill": { $ne: skill._id } },
+      {
+        $push: {
+          skills: { skill: skill._id, rating, endorsements: [] },
+        },
+      },
+      { new: true },
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ error: "User not found or skill already exists" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error adding skill:", error);
+    res.status(500).json({ error: "Failed to add skill" });
+  }
+});
 
 // PUT /me/skills/:skillId - Update skill rating
 router.put(
   "/me/skills/:skillId",
-  requireAuth(),
+  requireAuth,
   async (req: Request, res: Response) => {
     try {
       const { userId } = getAuth(req);
@@ -172,7 +168,7 @@ router.put(
 // DELETE /me/skills/:skillId - Remove a skill
 router.delete(
   "/me/skills/:skillId",
-  requireAuth(),
+  requireAuth,
   async (req: Request, res: Response) => {
     try {
       const { userId } = getAuth(req);
