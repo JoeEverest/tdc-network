@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion } from 'motion/react';
-import { User, Star, Briefcase, Check } from 'lucide-react';
+import { User, Star, Briefcase, Check, Loader2, AlertCircle } from 'lucide-react';
+import { useCreateUser, useProfile } from '../hooks/useUsers';
 
 const steps = [
     { id: 1, name: 'Basic Info', icon: User },
@@ -32,11 +34,14 @@ const popularSkills = [
     'React', 'TypeScript', 'Node.js', 'Python', 'Java', 'Go', 'Rust',
     'PostgreSQL', 'MongoDB', 'AWS', 'Docker', 'Kubernetes', 'GraphQL',
     'Next.js', 'Vue.js', 'Angular', 'React Native', 'Flutter', 'Swift',
-    'Kotlin', 'C++', 'C#', '.NET', 'Ruby', 'PHP', 'Laravel', 'Django'
+    'Kotlin', 'C++', 'C#', '.NET', 'Ruby', 'PHP', 'Laravel', 'Django',
+    'Figma', 'Sketch', 'Adobe XD', 'Photoshop', 'Illustrator', 'CSS',
+    'Sass', 'Less', 'Tailwind CSS', 'Bootstrap', 'Material-UI'
 ];
 
-export function ProfileSetup() {
+export function ProfileSetupNew() {
     const { user } = useUser();
+    const navigate = useNavigate();
     const [currentStep, setCurrentStep] = React.useState(1);
     const [formData, setFormData] = React.useState({
         bio: '',
@@ -53,6 +58,19 @@ export function ProfileSetup() {
         category: '',
         rating: 5
     });
+
+    // Check if user already has a profile
+    const { data: currentUser, isLoading: profileLoading } = useProfile();
+
+    // Create user mutation
+    const createUserMutation = useCreateUser();
+
+    // Redirect to dashboard if user already has a profile
+    React.useEffect(() => {
+        if (!profileLoading && currentUser) {
+            navigate('/dashboard');
+        }
+    }, [currentUser, profileLoading, navigate]);
 
     const handleAddSkill = () => {
         if (newSkill.name && newSkill.category) {
@@ -71,12 +89,47 @@ export function ProfileSetup() {
         }));
     };
 
-    const handleSubmit = () => {
-        // TODO: Submit to API
-        console.log('Profile data:', formData);
-        // Redirect to dashboard
-        window.location.href = '/dashboard';
+    const handleSubmit = async () => {
+        if (!user?.id) return;
+
+        try {
+            // Prepare user data for API
+            const userData = {
+                clerkId: user.id,
+                name: user.fullName || user.firstName + ' ' + user.lastName || 'User',
+                email: formData.contactEmail,
+                bio: formData.bio,
+                phone: formData.phone || undefined,
+                linkedin: formData.linkedin || undefined,
+                website: formData.website || undefined,
+                availableForHire: formData.availableForHire,
+                skills: formData.skills.map(skill => ({
+                    skill: skill.name, // In a real app, this might be a skill ID
+                    rating: skill.rating,
+                    category: skill.category
+                }))
+            };
+
+            await createUserMutation.mutateAsync(userData);
+
+            // Navigate to dashboard on success
+            navigate('/dashboard');
+        } catch (error) {
+            console.error('Error creating profile:', error);
+        }
     };
+
+    // Show loading while checking existing profile
+    if (profileLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Checking your profile...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
@@ -119,6 +172,16 @@ export function ProfileSetup() {
 
                 {/* Form Content */}
                 <div className="bg-white rounded-lg shadow-sm p-6">
+                    {/* Error Display */}
+                    {createUserMutation.isError && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-red-600" />
+                            <p className="text-red-800 text-sm">
+                                There was an error creating your profile. Please try again.
+                            </p>
+                        </div>
+                    )}
+
                     {currentStep === 1 && (
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
@@ -249,7 +312,12 @@ export function ProfileSetup() {
                                         </div>
                                     </div>
 
-                                    <Button onClick={handleAddSkill} className="mt-4" size="sm">
+                                    <Button
+                                        onClick={handleAddSkill}
+                                        className="mt-4"
+                                        size="sm"
+                                        disabled={!newSkill.name || !newSkill.category}
+                                    >
                                         Add Skill
                                     </Button>
                                 </div>
@@ -274,6 +342,13 @@ export function ProfileSetup() {
                                                 </Button>
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+
+                                {formData.skills.length === 0 && (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <Star className="h-8 w-8 mx-auto mb-2" />
+                                        <p>Add at least one skill to continue</p>
                                     </div>
                                 )}
                             </div>
@@ -310,6 +385,7 @@ export function ProfileSetup() {
                                 <h4 className="font-medium text-blue-900 mb-2">Profile Summary</h4>
                                 <div className="text-sm text-blue-800 space-y-1">
                                     <p>Bio: {formData.bio || 'Not provided'}</p>
+                                    <p>Contact Email: {formData.contactEmail}</p>
                                     <p>Skills: {formData.skills.length} added</p>
                                     <p>Available for hire: {formData.availableForHire ? 'Yes' : 'No'}</p>
                                 </div>
@@ -330,13 +406,26 @@ export function ProfileSetup() {
                         {currentStep < steps.length ? (
                             <Button
                                 onClick={() => setCurrentStep(prev => prev + 1)}
-                                disabled={currentStep === 2 && formData.skills.length === 0}
+                                disabled={
+                                    (currentStep === 1 && (!formData.bio || !formData.contactEmail)) ||
+                                    (currentStep === 2 && formData.skills.length === 0)
+                                }
                             >
                                 Next
                             </Button>
                         ) : (
-                            <Button onClick={handleSubmit}>
-                                Complete Profile
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={createUserMutation.isLoading}
+                            >
+                                {createUserMutation.isLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Creating Profile...
+                                    </>
+                                ) : (
+                                    'Complete Profile'
+                                )}
                             </Button>
                         )}
                     </div>

@@ -5,10 +5,10 @@ import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AppLayout } from './components/AppLayout';
 import { Dashboard } from './components/Dashboard';
-import { ProfileSetup } from './components/ProfileSetup';
-import { Members } from './components/Members';
-import { Jobs } from './components/Jobs';
-import { Endorsements } from './components/Endorsements';
+import { ProfileSetupNew } from './components/ProfileSetupNew';
+import { MembersNew } from './components/MembersNew';
+import { JobsNew } from './components/JobsNew';
+import { EndorsementsNew } from './components/EndorsementsNew';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -37,12 +37,12 @@ function App() {
           <SignedIn>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/setup" element={<ProfileSetup />} />
+              <Route path="/setup" element={<ProfileSetupNew />} />
               <Route path="/*" element={<AppLayout />}>
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="members" element={<Members />} />
-                <Route path="jobs" element={<Jobs />} />
-                <Route path="endorsements" element={<Endorsements />} />
+                <Route path="members" element={<MembersNew />} />
+                <Route path="jobs" element={<JobsNew />} />
+                <Route path="endorsements" element={<EndorsementsNew />} />
               </Route>
             </Routes>
           </SignedIn>

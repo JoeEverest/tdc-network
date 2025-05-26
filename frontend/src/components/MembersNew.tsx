@@ -13,14 +13,14 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useUsers } from '../hooks';
-import { User as UserType, SearchFilters, UserSkill } from '../types';
+import { User as UserType, SearchFilters } from '../types';
 
 const skillOptions = [
     'React', 'TypeScript', 'Node.js', 'Python', 'Go', 'Java',
     'Docker', 'Kubernetes', 'AWS', 'Figma', 'CSS', 'GraphQL'
 ];
 
-export function Members() {
+export function MembersNew() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [selectedSkills, setSelectedSkills] = React.useState<string[]>([]);
     const [minRating, setMinRating] = React.useState<number>(1);
@@ -57,8 +57,8 @@ export function Members() {
 
             // Endorsed filter (if not handled by backend)
             if (showEndorsedOnly) {
-                const hasEndorsements = member.skills.some((userSkill: UserSkill) =>
-                    userSkill.endorsements && userSkill.endorsements.length > 0
+                const hasEndorsements = member.skills.some(skill =>
+                    Array.isArray(skill.endorsements) ? skill.endorsements.length > 0 : false
                 );
                 if (!hasEndorsements) {
                     return false;
@@ -89,7 +89,7 @@ export function Members() {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                             <Input
                                 id="search"
-                                placeholder="Search by name or bio..."
+                                placeholder="Search by name..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10"
@@ -207,82 +207,66 @@ export function Members() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow"
+                            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
                         >
-                            {/* Member Header */}
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                                        <User className="h-6 w-6 text-gray-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900">{member.name}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            {member.skills.some(skill => skill.endorsements.length > 0) && (
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <Star className="h-3 w-3 mr-1" />
-                                                    Endorsed
-                                                </span>
-                                            )}
-                                            {member.availableForHire && (
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    Available
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <User className="h-6 w-6 text-gray-400" />
                                 </div>
-                            </div>
-
-                            {/* Email */}
-                            <p className="text-gray-600 text-sm mb-4">
-                                {member.email}
-                            </p>
-
-                            {/* Skills */}
-                            <div className="mb-4">
-                                <h4 className="text-sm font-medium text-gray-900 mb-2">Skills</h4>
-                                <div className="space-y-1">
-                                    {member.skills.slice(0, 3).map((userSkill, skillIndex) => {
-                                        const skillName = typeof userSkill.skill === 'string'
-                                            ? userSkill.skill
-                                            : userSkill.skill.name;
-                                        return (
-                                            <div key={`${member._id}-skill-${skillIndex}`} className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-700">{skillName}</span>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-sm text-blue-600">{userSkill.rating}/10</span>
-                                                    {userSkill.endorsements.length > 0 && (
-                                                        <span className="text-xs text-gray-500">
-                                                            ({userSkill.endorsements.length} endorsements)
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {member.skills.length > 3 && (
-                                        <span className="text-xs text-gray-500">
-                                            +{member.skills.length - 3} more skills
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                        {member.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        {member.email}
+                                    </p>
+                                    {member.availableForHire && (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+                                            Available for hire
                                         </span>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Contact Info */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    {member.contactInfo?.email && (
-                                        <Button size="sm" variant="ghost" className="p-2">
-                                            <Mail className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                    {member.contactInfo?.phone && (
-                                        <Button size="sm" variant="ghost" className="p-2">
-                                            <span className="h-4 w-4">📞</span>
-                                        </Button>
+                            {/* Skills */}
+                            <div className="mt-4">
+                                <h4 className="text-sm font-medium text-gray-900 mb-2">Skills</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {member.skills.slice(0, 4).map((userSkill, skillIndex) => {
+                                        const skillName = typeof userSkill.skill === 'string'
+                                            ? userSkill.skill
+                                            : userSkill.skill?.name || 'Unknown';
+                                        return (
+                                            <span
+                                                key={skillIndex}
+                                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                            >
+                                                {skillName}
+                                                <span className="ml-1 text-blue-600">
+                                                    {userSkill.rating}/10
+                                                </span>
+                                                {userSkill.endorsements.length > 0 && (
+                                                    <Star className="ml-1 h-3 w-3 text-yellow-500 fill-current" />
+                                                )}
+                                            </span>
+                                        );
+                                    })}
+                                    {member.skills.length > 4 && (
+                                        <span className="text-xs text-gray-500">
+                                            +{member.skills.length - 4} more
+                                        </span>
                                     )}
                                 </div>
+                            </div>
+
+                            {/* Contact Actions */}
+                            <div className="mt-4 flex gap-2">
+                                {member.contactInfo?.email && (
+                                    <Button size="sm" variant="outline" className="flex-1">
+                                        <Mail className="h-4 w-4 mr-1" />
+                                        Contact
+                                    </Button>
+                                )}
                                 <Button size="sm" variant="outline">
                                     View Profile
                                 </Button>
@@ -292,13 +276,13 @@ export function Members() {
                 </div>
             )}
 
-            {/* No Results */}
+            {/* Empty State */}
             {!isLoading && !error && filteredMembers.length === 0 && (
                 <div className="text-center py-12">
                     <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No members found</h3>
                     <p className="text-gray-600">
-                        Try adjusting your search criteria or filters.
+                        Try adjusting your filters to see more results.
                     </p>
                 </div>
             )}

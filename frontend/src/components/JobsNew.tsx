@@ -12,122 +12,131 @@ import {
     Clock,
     Star,
     Plus,
-    Building
+    Building,
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useJobs, useApplyToJob, useUserApplications } from '../hooks/useJobs';
+import { useProfile } from '../hooks/useUsers';
+import { Job, JobSearchFilters } from '../types';
 
-// Mock data - will be replaced with API calls
-const mockJobs = [
-    {
-        id: '1',
-        title: 'Senior Frontend Developer',
-        description: 'We are looking for an experienced React developer to join our growing team. You will be responsible for building user-facing features and improving our web application.',
-        company: 'TechCorp Inc.',
-        location: 'San Francisco, CA',
-        isRemote: true,
-        salaryRange: { min: 120000, max: 160000, currency: 'USD' },
-        requirements: [
-            { skillName: 'React', minimumRating: 8, required: true },
-            { skillName: 'TypeScript', minimumRating: 7, required: true },
-            { skillName: 'Node.js', minimumRating: 6, required: false }
-        ],
-        isActive: true,
-        createdAt: '2024-01-15',
-        author: { name: 'John Smith', company: 'TechCorp Inc.' }
-    },
-    {
-        id: '2',
-        title: 'UI/UX Designer',
-        description: 'Join our design team to create beautiful and intuitive user experiences. We are looking for someone passionate about user-centered design.',
-        company: 'Design Studio',
-        location: 'Remote',
-        isRemote: true,
-        salaryRange: { min: 80000, max: 120000, currency: 'USD' },
-        requirements: [
-            { skillName: 'Figma', minimumRating: 8, required: true },
-            { skillName: 'CSS', minimumRating: 7, required: true },
-            { skillName: 'React', minimumRating: 5, required: false }
-        ],
-        isActive: true,
-        createdAt: '2024-01-14',
-        author: { name: 'Sarah Johnson', company: 'Design Studio' }
-    },
-    {
-        id: '3',
-        title: 'Backend Engineer',
-        description: 'We need a backend engineer to help us scale our microservices architecture. Experience with Go and Kubernetes is essential.',
-        company: 'CloudTech',
-        location: 'New York, NY',
-        isRemote: false,
-        salaryRange: { min: 130000, max: 180000, currency: 'USD' },
-        requirements: [
-            { skillName: 'Go', minimumRating: 8, required: true },
-            { skillName: 'Kubernetes', minimumRating: 7, required: true },
-            { skillName: 'Docker', minimumRating: 6, required: true }
-        ],
-        isActive: true,
-        createdAt: '2024-01-13',
-        author: { name: 'Mike Davis', company: 'CloudTech' }
-    }
-];
-
-export function Jobs() {
+export function JobsNew() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [selectedSkills, setSelectedSkills] = React.useState<string[]>([]);
     const [showRemoteOnly, setShowRemoteOnly] = React.useState(false);
     const [minSalary, setMinSalary] = React.useState<number>(0);
     const [maxSalary, setMaxSalary] = React.useState<number>(300000);
 
+    // Build search filters for the API
+    const searchFilters: JobSearchFilters = React.useMemo(() => {
+        const filters: JobSearchFilters = {};
+
+        if (searchTerm) {
+            filters.search = searchTerm;
+        }
+
+        if (selectedSkills.length > 0) {
+            filters.skills = selectedSkills;
+        }
+
+        if (showRemoteOnly) {
+            filters.isRemote = true;
+        }
+
+        if (minSalary > 0 || maxSalary < 300000) {
+            filters.salaryRange = {
+                min: minSalary,
+                max: maxSalary
+            };
+        }
+
+        return filters;
+    }, [searchTerm, selectedSkills, showRemoteOnly, minSalary, maxSalary]);
+
+    // Fetch jobs with filters
+    const {
+        data: jobs = [],
+        isLoading: jobsLoading,
+        error: jobsError,
+        refetch: refetchJobs
+    } = useJobs(searchFilters);
+
+    // Get current user profile to check skills
+    const { data: currentUser } = useProfile();
+
+    // Get user's applications
+    const { data: userApplications = [] } = useUserApplications(currentUser?._id || '');
+
+    // Apply to job mutation
+    const applyToJobMutation = useApplyToJob();
+
     const skillOptions = [
         'React', 'TypeScript', 'Node.js', 'Go', 'Python', 'Java',
-        'Docker', 'Kubernetes', 'AWS', 'Figma', 'CSS', 'GraphQL'
+        'Docker', 'Kubernetes', 'AWS', 'Figma', 'CSS', 'GraphQL',
+        'Vue.js', 'Angular', 'Express.js', 'PostgreSQL', 'MongoDB',
+        'Redis', 'Elasticsearch', 'Jenkins', 'Terraform'
     ];
 
-    const filteredJobs = mockJobs.filter(job => {
-        // Search term filter
-        if (searchTerm && !job.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !job.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !job.company.toLowerCase().includes(searchTerm.toLowerCase())) {
-            return false;
-        }
+    // Check if user can apply to a job based on their skills
+    const canApplyToJob = (job: Job) => {
+        if (!currentUser?.skills) return false;
 
-        // Remote filter
-        if (showRemoteOnly && !job.isRemote) {
-            return false;
-        }
+        // Get user's skills with ratings
+        const userSkills = currentUser.skills.reduce((acc: Record<string, number>, skill: any) => {
+            const skillName = typeof skill.skill === 'string' ? skill.skill : skill.skill.name;
+            acc[skillName] = skill.rating;
+            return acc;
+        }, {});
 
-        // Salary filter
-        if (job.salaryRange && (job.salaryRange.min > maxSalary || job.salaryRange.max < minSalary)) {
-            return false;
-        }
-
-        // Skills filter
-        if (selectedSkills.length > 0) {
-            const jobSkills = job.requirements.map(r => r.skillName);
-            const hasRequiredSkills = selectedSkills.every(skill => jobSkills.includes(skill));
-            if (!hasRequiredSkills) {
-                return false;
-            }
-        }
-
-        return true;
-    });
-
-    // Check if user can apply to a job (mock function)
-    const canApplyToJob = (job: { requirements: Array<{ skillName: string; minimumRating: number; required: boolean }> }) => {
-        // Mock: assume user has some skills with ratings
-        const userSkills: Record<string, number> = {
-            'React': 8,
-            'TypeScript': 7,
-            'Node.js': 6,
-            'Figma': 9,
-            'CSS': 8
-        };
-
+        // Check if user meets minimum requirements for all required skills
         return job.requirements
-            .filter((req: { required: boolean }) => req.required)
-            .every((req: { skillName: string; minimumRating: number }) => userSkills[req.skillName] >= req.minimumRating);
+            .filter((req) => req.required)
+            .every((req) => userSkills[req.skillName] >= req.minimumRating);
     };
+
+    // Check if user has already applied to this job
+    const hasApplied = (jobId: string) => {
+        return userApplications.some((app: any) => app.job === jobId || app.job._id === jobId);
+    };
+
+    // Handle job application
+    const handleApplyToJob = async (jobId: string) => {
+        if (!currentUser?._id) return;
+
+        try {
+            await applyToJobMutation.mutateAsync({
+                jobId,
+                userId: currentUser._id
+            });
+        } catch (error) {
+            console.error('Error applying to job:', error);
+        }
+    };
+
+    // Loading state
+    if (jobsLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <span className="ml-2 text-gray-600">Loading jobs...</span>
+            </div>
+        );
+    }
+
+    // Error state
+    if (jobsError) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12">
+                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading jobs</h3>
+                <p className="text-gray-600 mb-4">There was an error loading the job listings.</p>
+                <Button onClick={() => refetchJobs()} variant="outline">
+                    Try Again
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -239,7 +248,7 @@ export function Jobs() {
                         <Checkbox
                             id="remote"
                             checked={showRemoteOnly}
-                            onCheckedChange={(checked) => setShowRemoteOnly(checked === true)}
+                            onCheckedChange={setShowRemoteOnly}
                         />
                         <Label htmlFor="remote" className="text-sm">
                             Remote jobs only
@@ -250,9 +259,9 @@ export function Jobs() {
 
             {/* Job Listings */}
             <div className="space-y-4">
-                {filteredJobs.map((job, index) => (
+                {jobs.map((job: any, index: number) => (
                     <motion.div
-                        key={job.id}
+                        key={job._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -269,7 +278,11 @@ export function Jobs() {
                                                 Remote
                                             </span>
                                         )}
-                                        {canApplyToJob(job) ? (
+                                        {hasApplied(job._id) ? (
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Applied
+                                            </span>
+                                        ) : canApplyToJob(job) ? (
                                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                 <Star className="h-3 w-3 mr-1" />
                                                 Eligible
@@ -294,7 +307,7 @@ export function Jobs() {
                                     {job.salaryRange && (
                                         <div className="flex items-center gap-1">
                                             <DollarSign className="h-4 w-4" />
-                                            ${job.salaryRange.min.toLocaleString()} - ${job.salaryRange.max.toLocaleString()}
+                                            ${job.salaryRange.min?.toLocaleString()} - ${job.salaryRange.max?.toLocaleString()}
                                         </div>
                                     )}
                                     <div className="flex items-center gap-1">
@@ -308,33 +321,55 @@ export function Jobs() {
                                 </p>
 
                                 {/* Requirements */}
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-900 mb-2">Required Skills</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {job.requirements.map((req) => (
-                                            <span
-                                                key={req.skillName}
-                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${req.required
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
-                                                    }`}
-                                            >
-                                                {req.skillName} ({req.minimumRating}/10)
-                                                {req.required ? ' *' : ''}
-                                            </span>
-                                        ))}
+                                {job.requirements && job.requirements.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-900 mb-2">Required Skills</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {job.requirements.map((req: any, reqIndex: number) => (
+                                                <span
+                                                    key={reqIndex}
+                                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${req.required
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-yellow-100 text-yellow-800'
+                                                        }`}
+                                                >
+                                                    {req.skillName} ({req.minimumRating}/10)
+                                                    {req.required ? ' *' : ''}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex flex-col gap-2 lg:w-auto w-full">
-                                <Button
-                                    className="w-full lg:w-auto"
-                                    disabled={!canApplyToJob(job)}
-                                >
-                                    {canApplyToJob(job) ? 'Apply Now' : 'Skills Required'}
-                                </Button>
+                                {hasApplied(job._id) ? (
+                                    <Button
+                                        className="w-full lg:w-auto"
+                                        variant="outline"
+                                        disabled
+                                    >
+                                        Applied
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        className="w-full lg:w-auto"
+                                        disabled={!canApplyToJob(job) || applyToJobMutation.isLoading}
+                                        onClick={() => handleApplyToJob(job._id)}
+                                    >
+                                        {applyToJobMutation.isLoading ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Applying...
+                                            </>
+                                        ) : canApplyToJob(job) ? (
+                                            'Apply Now'
+                                        ) : (
+                                            'Skills Required'
+                                        )}
+                                    </Button>
+                                )}
                                 <Button variant="outline" className="w-full lg:w-auto">
                                     View Details
                                 </Button>
@@ -345,7 +380,7 @@ export function Jobs() {
             </div>
 
             {/* No Results */}
-            {filteredJobs.length === 0 && (
+            {jobs.length === 0 && (
                 <div className="text-center py-12">
                     <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
@@ -359,18 +394,18 @@ export function Jobs() {
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                     <div>
-                        <div className="text-2xl font-bold text-blue-600">{filteredJobs.length}</div>
+                        <div className="text-2xl font-bold text-blue-600">{jobs.length}</div>
                         <div className="text-sm text-gray-600">Available Jobs</div>
                     </div>
                     <div>
                         <div className="text-2xl font-bold text-green-600">
-                            {filteredJobs.filter(job => canApplyToJob(job)).length}
+                            {jobs.filter((job: any) => canApplyToJob(job)).length}
                         </div>
                         <div className="text-sm text-gray-600">Jobs You Can Apply To</div>
                     </div>
                     <div>
                         <div className="text-2xl font-bold text-purple-600">
-                            {filteredJobs.filter(job => job.isRemote).length}
+                            {jobs.filter((job: any) => job.isRemote).length}
                         </div>
                         <div className="text-sm text-gray-600">Remote Opportunities</div>
                     </div>

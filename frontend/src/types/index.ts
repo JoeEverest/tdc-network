@@ -1,52 +1,37 @@
-// Core types for the skill-based hiring platform
+// Core types for the skill-based hiring platform - matching backend API
 
 export interface User {
-	id: string;
+	_id: string;
 	clerkId: string;
 	email: string;
 	name: string;
-	bio?: string;
-	avatarUrl?: string;
+	skills: UserSkill[];
 	availableForHire: boolean;
 	contactInfo?: {
 		email?: string;
 		phone?: string;
-		linkedin?: string;
-		website?: string;
 	};
-	isEndorsed: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
 
 export interface Skill {
-	id: string;
+	_id: string;
 	name: string;
-	category: string;
-	description?: string;
 }
 
 export interface UserSkill {
-	id: string;
-	userId: string;
-	skillId: string;
-	selfRating: number; // 1-10
-	endorsementCount: number;
-	averageEndorsedRating?: number;
-	skill: Skill;
-	endorsements: Endorsement[];
+	skill: Skill | string; // Can be populated or just ObjectId
+	rating: number; // 1-10
+	endorsements: string[]; // Array of user ObjectIds who endorsed this skill
 }
 
 export interface Endorsement {
-	id: string;
-	endorserId: string;
-	endorseeId: string;
-	skillId: string;
-	rating: number; // 1-10
-	comment?: string;
+	_id: string;
+	endorser: string; // User ObjectId
+	endorsee: string; // User ObjectId
+	skill: string; // Skill ObjectId
 	createdAt: string;
-	endorser: User;
-	skill: Skill;
 }
 
 export interface Job {
@@ -113,3 +98,67 @@ export interface PaginatedResponse<T> {
 	limit: number;
 	hasMore: boolean;
 }
+
+// Create/Update data types
+export interface CreateUserData {
+	clerkId: string;
+	email: string;
+	name: string;
+	skills?: UserSkill[];
+	availableForHire?: boolean;
+	contactInfo?: {
+		email?: string;
+		phone?: string;
+	};
+}
+
+export interface UpdateUserData {
+	name?: string;
+	skills?: UserSkill[];
+	availableForHire?: boolean;
+	contactInfo?: {
+		email?: string;
+		phone?: string;
+	};
+}
+
+export interface CreateJobData {
+	title: string;
+	description: string;
+	requirements: JobRequirement[];
+	contactInfo: {
+		email: string;
+		phone?: string;
+		company?: string;
+	};
+	location?: string;
+	isRemote: boolean;
+	salaryRange?: {
+		min: number;
+		max: number;
+		currency: string;
+	};
+}
+
+export type UpdateJobData = Partial<CreateJobData>;
+
+export interface CreateEndorsementData {
+	endorserId: string;
+	endorseeId: string;
+	skillId: string;
+}
+
+export interface JobApplication {
+	_id: string;
+	jobId: string;
+	userId: string;
+	coverLetter?: string;
+	status: "pending" | "accepted" | "rejected";
+	createdAt: string;
+	updatedAt: string;
+}
+
+export type Application = JobApplication;
+
+// Alias for JobFilters to match expected naming
+export type JobSearchFilters = JobFilters;

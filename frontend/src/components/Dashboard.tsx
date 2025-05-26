@@ -10,19 +10,75 @@ import {
     Star,
     Plus,
     TrendingUp,
-    MessageSquare
+    MessageSquare,
+    Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import {
+    useProfile,
+    useUserEndorsements,
+    useUserGivenEndorsements,
+    useToggleAvailability
+} from '../hooks';
+import { User } from '../types';
 
 export function Dashboard() {
     const { user } = useUser();
-    const [availableForHire, setAvailableForHire] = React.useState(false);
 
+    // Get user profile data
+    const { data: profile, isLoading: profileLoading } = useProfile();
+    const userProfile = profile as User | undefined;
+
+    // Only fetch endorsements if we have a profile
+    const { data: endorsements = [] } = useUserEndorsements(userProfile?._id || '');
+    const { data: givenEndorsements = [] } = useUserGivenEndorsements(userProfile?._id || '');
+
+    // Toggle availability mutation
+    const toggleAvailability = useToggleAvailability();
+
+    const availableForHire = userProfile?.availableForHire || false;
+
+    const handleAvailabilityToggle = async () => {
+        if (userProfile?._id) {
+            toggleAvailability.mutate(userProfile._id);
+        }
+    };
+
+    // Show loading state if profile is loading
+    if (profileLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
+    }
+
+    // Calculate stats from real data
     const stats = [
-        { label: 'Skills Added', value: '8', icon: TrendingUp, color: 'text-blue-600' },
-        { label: 'Endorsements', value: '12', icon: Star, color: 'text-yellow-600' },
-        { label: 'Profile Views', value: '34', icon: Users, color: 'text-green-600' },
-        { label: 'Messages', value: '5', icon: MessageSquare, color: 'text-purple-600' },
+        {
+            label: 'Skills Added',
+            value: userProfile?.skills?.length?.toString() || '0',
+            icon: TrendingUp,
+            color: 'text-blue-600'
+        },
+        {
+            label: 'Endorsements',
+            value: endorsements.length.toString(),
+            icon: Star,
+            color: 'text-yellow-600'
+        },
+        {
+            label: 'Profile Views',
+            value: '0', // Will implement this when backend supports it
+            icon: Users,
+            color: 'text-green-600'
+        },
+        {
+            label: 'Endorsements Given',
+            value: givenEndorsements.length.toString(),
+            icon: MessageSquare,
+            color: 'text-purple-600'
+        },
     ];
 
     const quickActions = [
@@ -53,8 +109,12 @@ export function Dashboard() {
                         <Switch
                             id="availability"
                             checked={availableForHire}
-                            onCheckedChange={setAvailableForHire}
+                            onCheckedChange={handleAvailabilityToggle}
+                            disabled={toggleAvailability.isLoading}
                         />
+                        {toggleAvailability.isLoading && (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
                     </div>
                 </div>
             </div>
