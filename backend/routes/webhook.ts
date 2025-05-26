@@ -6,8 +6,9 @@ const router = express.Router();
 // POST /user-created - Webhook endpoint for Clerk user creation
 router.post("/user-created", express.json(), async (req, res) => {
 	try {
-		const { id, email_addresses, first_name, last_name, username } =
-			req.body;
+		const { data } = req.body;
+
+		const { id, email_addresses, first_name, last_name, username } = data;
 
 		// Extract the primary email address
 		const primaryEmail = email_addresses?.[0]?.email_address;
@@ -29,15 +30,15 @@ router.post("/user-created", express.json(), async (req, res) => {
 
 		// Create new user in database
 		await User.create({
-clerkId: id,
-name,
-email: primaryEmail,
-contactInfo: { email: primaryEmail },
-skills: [],
-availableForHire: false,
-});
+			clerkId: id,
+			name,
+			email: primaryEmail,
+			contactInfo: { email: primaryEmail },
+			skills: [],
+			availableForHire: false,
+		});
 
-		console.log(`Created new user: ${name} (${primaryEmail})`);
+		console.log(`New user created: ${name} (${primaryEmail})`);
 		res.status(200).send("OK");
 	} catch (error) {
 		console.error("Error creating user from webhook:", error);

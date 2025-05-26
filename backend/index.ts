@@ -28,17 +28,17 @@ app.use("/endorsements", endorsementRoutes);
 app.use("/jobs", jobRoutes);
 
 app.get("/", (req, res) => {
-	res.json({ status: "ok", message: "Vibecode backend running" });
+  res.json({ status: "ok", message: "Vibecode backend running" });
 });
 
 mongoose
-	.connect(MONGO_URI)
-	.then(() => {
-		app.listen(PORT, () => {
-			console.log(`Server running on port ${PORT}`);
-		});
-	})
-	.catch((err) => {
-		console.error("Failed to connect to MongoDB", err);
-		process.exit(1);
-	});
+  .connect(MONGO_URI)
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB", err);
+    process.exit(1);
+  });
