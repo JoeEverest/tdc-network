@@ -24,7 +24,7 @@ import {
     useCanEndorse
 } from '../hooks/useEndorsements';
 import { useProfile, useSearchUsers } from '../hooks/useUsers';
-import { User as UserType } from '../types';
+import { User as UserType, Endorsement } from '../types';
 
 const skillOptions = [
     'React', 'TypeScript', 'Node.js', 'Python', 'Go', 'Java',
@@ -88,11 +88,25 @@ export function EndorsementsNew() {
     const handleEndorse = async () => {
         if (!currentUser?._id || !endorseForm.userId || !endorseForm.skill) return;
 
+        // Prevent self-endorsement
+        if (currentUser._id === endorseForm.userId) {
+            console.error('Cannot endorse yourself');
+            return;
+        }
+
+        // Validate rating range
+        if (endorseForm.rating < 1 || endorseForm.rating > 10) {
+            console.error('Rating must be between 1 and 10');
+            return;
+        }
+
         try {
             await createEndorsementMutation.mutateAsync({
                 endorserId: currentUser._id,
                 endorseeId: endorseForm.userId,
                 skillId: endorseForm.skill, // In a real app, this would be a skill ID
+                rating: endorseForm.rating,
+                comment: endorseForm.comment || undefined,
             });
 
             // Reset form and close
@@ -100,6 +114,7 @@ export function EndorsementsNew() {
             setShowEndorseForm(false);
         } catch (error) {
             console.error('Error creating endorsement:', error);
+            // You could add a toast notification here to show the user the error
         }
     };
 
@@ -112,7 +127,7 @@ export function EndorsementsNew() {
             ratings: number[];
         }
 
-        const skillCounts = userEndorsements.reduce((acc: Record<string, SkillData>, endorsement: any) => { // TODO: Fix Endorsement type mismatch
+        const skillCounts = userEndorsements.reduce((acc: Record<string, SkillData>, endorsement: Endorsement) => {
             const skillName = typeof endorsement.skill === 'string'
                 ? endorsement.skill
                 : endorsement.skill?.name || 'Unknown';
@@ -319,6 +334,15 @@ export function EndorsementsNew() {
                         </div>
                     )}
 
+                    {/* Self-endorsement warning */}
+                    {endorseForm.userId && currentUser?._id === endorseForm.userId && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-sm text-red-800">
+                                You cannot endorse your own skills. Please select a different member.
+                            </p>
+                        </div>
+                    )}
+
                     <div className="flex gap-2">
                         <Button
                             onClick={handleEndorse}
@@ -326,6 +350,7 @@ export function EndorsementsNew() {
                                 !endorseForm.userId ||
                                 !endorseForm.skill ||
                                 canEndorse === false ||
+                                currentUser?._id === endorseForm.userId ||
                                 createEndorsementMutation.isLoading
                             }
                         >
@@ -364,7 +389,7 @@ export function EndorsementsNew() {
 
                 <TabsContent value="received" className="p-6">
                     <div className="space-y-4">
-                        {userEndorsements.map((endorsement: any, index: number) => ( // TODO: Fix Endorsement type
+                        {userEndorsements.map((endorsement: Endorsement, index: number) => (
                             <motion.div
                                 key={endorsement._id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -425,7 +450,7 @@ export function EndorsementsNew() {
 
                 <TabsContent value="given" className="p-6">
                     <div className="space-y-4">
-                        {givenEndorsements.map((endorsement: any, index: number) => ( // TODO: Fix Endorsement type
+                        {givenEndorsements.map((endorsement: Endorsement, index: number) => (
                             <motion.div
                                 key={endorsement._id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -440,8 +465,8 @@ export function EndorsementsNew() {
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-900">
-                                                {typeof endorsement.user === 'object'
-                                                    ? endorsement.user?.name
+                                                {typeof endorsement.endorsee === 'object'
+                                                    ? endorsement.endorsee?.name
                                                     : 'Unknown User'}
                                             </h3>
                                             <p className="text-sm text-gray-600">

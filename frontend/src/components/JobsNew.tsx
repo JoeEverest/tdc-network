@@ -21,7 +21,7 @@ import {
 import { motion } from 'motion/react';
 import { useJobs, useApplyToJob, useUserApplications } from '../hooks/useJobs';
 import { useProfile } from '../hooks/useUsers';
-import { Job, JobRequirement, Application, JobSearchFilters } from '../types';
+import { Job, JobRequirement, Application, JobSearchFilters, UserSkill } from '../types';
 
 export function JobsNew() {
     const navigate = useNavigate();
@@ -30,6 +30,7 @@ export function JobsNew() {
     const [showRemoteOnly, setShowRemoteOnly] = React.useState(false);
     const [minSalary, setMinSalary] = React.useState<number>(0);
     const [maxSalary, setMaxSalary] = React.useState<number>(300000);
+    const [selectedJob, setSelectedJob] = React.useState<Job | null>(null);
 
     // Build search filters for the API
     const searchFilters: JobSearchFilters = React.useMemo(() => {
@@ -83,25 +84,20 @@ export function JobsNew() {
 
     // Check if user can apply to a job based on their skills
     const canApplyToJob = (job: Job) => {
-        console.log(job);
+        if (!currentUser?.skills) return false;
 
-        return true
-        // if (!currentUser?.skills) return false;
+        // Get user's skills with ratings
+        const userSkills = currentUser.skills.reduce((acc: Record<string, number>, skill: UserSkill) => {
+            const skillName = typeof skill.skill === 'string' ? skill.skill : skill.skill.name;
+            acc[skillName] = skill.rating;
+            return acc;
+        }, {});
 
-        // // Get user's skills with ratings
-        // const userSkills = currentUser.skills.reduce((acc: Record<string, number>, skill: UserSkill) => {
-        //     const skillName = typeof skill.skill === 'string' ? skill.skill : skill.skill.name;
-        //     acc[skillName] = skill.rating;
-        //     return acc;
-        // }, {});
-
-        // // Check if user meets minimum requirements for all required skills
-        // return job.requirements
-        //     .filter((req) => req.required)
-        //     .every((req) => {
-        //         const skillName = req.skillName || req.skill.name;
-        //         return userSkills[skillName] >= req.minimumRating;
-        //     });
+        // Check if user meets minimum requirements for all required skills
+        return job.requirements.every((req) => {
+            const skillName = typeof req.skill === 'string' ? req.skill : req.skill;
+            return userSkills[skillName] && userSkills[skillName] >= req.minRating;
+        });
     };
 
     // Check if user has already applied to this job
@@ -370,8 +366,13 @@ export function JobsNew() {
                                         )}
                                     </Button>
                                 )}
-                                <Button variant="outline" className="w-full lg:w-auto">
-                                    View Details
+                                <Button
+                                    variant="outline"
+                                    className="w-full lg:w-auto"
+                                    onClick={() => canApplyToJob(job) ? setSelectedJob(job) : null}
+                                    disabled={!canApplyToJob(job)}
+                                >
+                                    {canApplyToJob(job) ? 'View Contact' : 'Skills Required'}
                                 </Button>
                             </div>
                         </div>
@@ -387,6 +388,52 @@ export function JobsNew() {
                     <p className="text-gray-600">
                         Try adjusting your search criteria or filters.
                     </p>
+                </div>
+            )}
+
+            {/* Contact Modal */}
+            {selectedJob && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                        <div className="space-y-3">
+                            <div>
+                                <span className="text-sm font-medium text-gray-600">Job: </span>
+                                <span className="text-sm text-gray-900">{selectedJob.title}</span>
+                            </div>
+                            <div>
+                                <span className="text-sm font-medium text-gray-600">Company: </span>
+                                <span className="text-sm text-gray-900">{selectedJob.company || selectedJob.contactInfo?.company}</span>
+                            </div>
+                            <div>
+                                <span className="text-sm font-medium text-gray-600">Email: </span>
+                                <span className="text-sm text-gray-900">{selectedJob.contactInfo.email}</span>
+                            </div>
+                            {selectedJob.contactInfo.phone && (
+                                <div>
+                                    <span className="text-sm font-medium text-gray-600">Phone: </span>
+                                    <span className="text-sm text-gray-900">{selectedJob.contactInfo.phone}</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-2 mt-6">
+                            <Button
+                                onClick={() => setSelectedJob(null)}
+                                variant="outline"
+                                className="flex-1"
+                            >
+                                Close
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    window.location.href = `mailto:${selectedJob.contactInfo.email}?subject=Application for ${selectedJob.title}`;
+                                }}
+                                className="flex-1"
+                            >
+                                Send Email
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
 

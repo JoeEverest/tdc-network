@@ -28,10 +28,13 @@ export interface UserSkill {
 
 export interface Endorsement {
 	_id: string;
-	endorser: string; // User ObjectId
-	endorsee: string; // User ObjectId
-	skill: string; // Skill ObjectId
+	endorser: string | User; // User ObjectId or populated User object
+	endorsee: string | User; // User ObjectId or populated User object
+	skill: string | Skill; // Skill ObjectId or populated Skill object
+	rating: number; // 1-10 rating
+	comment?: string; // Optional comment
 	createdAt: string;
+	updatedAt?: string;
 }
 
 export interface Job {
@@ -152,6 +155,8 @@ export interface CreateEndorsementData {
 	endorserId: string;
 	endorseeId: string;
 	skillId: string;
+	rating: number; // 1-10 rating
+	comment?: string; // Optional comment
 }
 
 export interface JobApplication {

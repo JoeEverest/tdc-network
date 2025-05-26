@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
@@ -24,6 +25,7 @@ import { User } from '../types';
 
 export function Dashboard() {
     const { user } = useUser();
+    const navigate = useNavigate();
 
     // Get user profile data
     const { data: profile, isLoading: profileLoading } = useProfile();
@@ -82,10 +84,10 @@ export function Dashboard() {
     ];
 
     const quickActions = [
-        { label: 'Add Skills', icon: Plus, href: '/profile/skills' },
-        { label: 'Browse Members', icon: Users, href: '/members' },
-        { label: 'View Jobs', icon: Briefcase, href: '/jobs' },
-        { label: 'Post Job', icon: Plus, href: '/jobs/new' },
+        { label: 'Add Skills', icon: Plus, action: () => navigate('/setup') },
+        { label: 'Browse Members', icon: Users, action: () => navigate('/members') },
+        { label: 'View Jobs', icon: Briefcase, action: () => navigate('/jobs') },
+        { label: 'Post Job', icon: Plus, action: () => navigate('/jobs/new') },
     ];
 
     return (
@@ -149,12 +151,10 @@ export function Dashboard() {
                             key={action.label}
                             variant="outline"
                             className="h-auto p-4 flex flex-col items-center gap-2"
-                            asChild
+                            onClick={action.action}
                         >
-                            <a href={action.href}>
-                                <action.icon className="h-6 w-6" />
-                                <span className="text-sm font-medium">{action.label}</span>
-                            </a>
+                            <action.icon className="h-6 w-6" />
+                            <span className="text-sm font-medium">{action.label}</span>
                         </Button>
                     ))}
                 </div>
