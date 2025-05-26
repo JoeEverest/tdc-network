@@ -6,14 +6,96 @@
 ---
 
 ## Authentication
-All routes require authentication via Clerk. The authenticated user's Clerk ID is used to identify the user in the database.
+Most routes require authentication via Clerk. The authenticated user's Clerk ID is used to identify the user in the database.
 
 ---
 
 ## Endpoints
 
+### GET `/user`
+Get all users (public profiles only).
+
+**Authentication Required:** No
+
+**Response:**
+
+```json
+[
+  {
+    "_id": "string",
+    "name": "string",
+    "skills": [
+      {
+        "skill": {
+          "_id": "string",
+          "name": "string"
+        },
+        "rating": "number",
+        "endorsements": ["string"]
+      }
+    ],
+    "availableForHire": "boolean",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  }
+]
+```
+
+**Status Codes:**
+
+- 200: Success
+- 500: Server error
+
+---
+
+### GET `/user/:userId`
+Get a specific user's public profile by their Clerk ID.
+
+**Authentication Required:** No
+
+**URL Parameters:**
+
+- `userId`: Clerk ID of the user to retrieve
+
+**Response:**
+
+```json
+{
+  "_id": "string",
+  "name": "string",
+  "skills": [
+    {
+      "skill": {
+        "_id": "string",
+        "name": "string"
+      },
+      "rating": "number",
+      "endorsements": [
+        {
+          "_id": "string",
+          "name": "string"
+        }
+      ]
+    }
+  ],
+  "availableForHire": "boolean",
+  "createdAt": "ISODate",
+  "updatedAt": "ISODate"
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 404: User not found
+- 500: Server error
+
+---
+
 ### GET `/user/me`
 Get the current user's profile. If the user does not exist, a new user is created from Clerk profile info.
+
+**Authentication Required:** Yes
 
 **Response:**
 ```

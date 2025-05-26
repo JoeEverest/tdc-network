@@ -20,6 +20,40 @@ async function findOrCreateUser(clerkId: string, profile: any) {
 	return user;
 }
 
+// GET /users - Get all users
+router.get("/", async (_req, res) => {
+	try {
+		const users = await User.find({})
+			.populate('skills.skill', 'name')
+			.select('-clerkId -email -contactInfo')
+			.sort({ name: 1 });
+		res.json(users);
+	} catch (error) {
+		console.error('Error fetching users:', error);
+		res.status(500).json({ error: "Failed to fetch users" });
+	}
+});
+
+// GET /users/:userId - Get a specific user by Clerk ID
+router.get("/:userId", async (req, res) => {
+	try {
+		const { userId } = req.params;
+		const user = await User.findOne({ clerkId: userId })
+			.populate('skills.skill', 'name')
+			.populate('skills.endorsements', 'name')
+			.select('-clerkId -email -contactInfo');
+		
+		if (!user) {
+			return res.status(404).json({ error: "User not found" });
+		}
+		
+		res.json(user);
+	} catch (error) {
+		console.error('Error fetching user:', error);
+		res.status(500).json({ error: "Failed to fetch user" });
+	}
+});
+
 // GET /me - Get current user profile
 router.get("/me", requireAuth, async (req: any, res) => {
 	try {
