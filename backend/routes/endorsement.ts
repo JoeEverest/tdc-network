@@ -1,5 +1,5 @@
 import express from "express";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { User, Skill, Endorsement } from "../models";
 import mongoose from "mongoose";

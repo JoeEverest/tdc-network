@@ -1,7 +1,7 @@
 import express from "express";
 import { Request, Response } from "express";
 import { requireAuth } from "../middleware/requireAuth";
-import { Job, User, IUser } from "../models";
+import { Job, User } from "../models";
 import mongoose from "mongoose";
 
 const router = express.Router();
