@@ -175,6 +175,58 @@ Remove a skill from the current user.
 
 ---
 
+---
+
+### GET `/user/search`
+
+Search for users based on their skills and rating ranges.
+
+**Authentication Required:** No
+
+**Query Parameters:**
+
+- `skills` (optional): String or array of skill names to search for (case-insensitive)
+- `minRating` (optional): Minimum skill rating (1-10)
+- `maxRating` (optional): Maximum skill rating (1-10)
+- `availableForHire` (optional): Boolean string ("true" or "false") to filter by availability
+
+**Example Requests:**
+
+- `/user/search?skills=JavaScript&minRating=7` - Find users with JavaScript skill rated 7 or higher
+- `/user/search?skills=JavaScript,React&minRating=5&maxRating=9` - Find users with JavaScript OR React skills between 5-9 rating
+- `/user/search?availableForHire=true` - Find users available for hire
+
+**Response:**
+
+```json
+[
+  {
+    "_id": "string",
+    "name": "string",
+    "skills": [
+      {
+        "skill": {
+          "_id": "string",
+          "name": "string"
+        },
+        "rating": "number",
+        "endorsements": ["string"]
+      }
+    ],
+    "availableForHire": "boolean",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  }
+]
+```
+
+**Status Codes:**
+
+- 200: Success (returns empty array if no matches found)
+- 500: Server error
+
+---
+
 ## Notes
 - All responses return the full user object after the operation.
 - Skill ratings must be between 1 and 10.

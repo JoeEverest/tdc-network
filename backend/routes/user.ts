@@ -145,4 +145,119 @@ router.delete("/me/skills/:skillId", requireAuth, async (req: any, res) => {
 	}
 });
 
+// GET /search - Search users by skills and rating ranges
+router.get("/search", async (req, res) => {
+	try {
+		const { skills, minRating, maxRating, availableForHire } = req.query;
+		
+		// Build the aggregation pipeline
+		const pipeline: mongoose.PipelineStage[] = [];
+		
+		// Start with all users
+		const initialMatch: Record<string, boolean | string | number> = {};
+		
+		// Filter by availableForHire if specified
+		if (availableForHire !== undefined) {
+			initialMatch.availableForHire = availableForHire === 'true';
+		}
+		
+		pipeline.push({
+			$match: initialMatch
+		});
+		
+		// If skills are specified, filter users who have those skills
+		if (skills) {
+			const skillNames = Array.isArray(skills) ? skills : [skills];
+			
+			// First, get skill IDs from skill names
+			const skillDocs = await Skill.find({ 
+				name: { $in: skillNames.map((name) => new RegExp(name as string, 'i')) }
+			});
+			const skillIds = skillDocs.map(skill => skill._id);
+			
+			if (skillIds.length > 0) {
+				pipeline.push({
+					$match: {
+						"skills.skill": { $in: skillIds }
+					}
+				});
+			} else {
+				// If no matching skills found, return empty result
+				return res.json([]);
+			}
+		}
+		
+		// Filter by rating range if specified
+		if (minRating !== undefined || maxRating !== undefined) {
+			const ratingMatch: { $gte?: number; $lte?: number } = {};
+			if (minRating !== undefined) {
+				ratingMatch.$gte = parseInt(minRating as string);
+			}
+			if (maxRating !== undefined) {
+				ratingMatch.$lte = parseInt(maxRating as string);
+			}
+			
+			pipeline.push({
+				$match: {
+					"skills.rating": ratingMatch
+				}
+			});
+		}
+		
+		// Populate skills and exclude sensitive information
+		pipeline.push(
+			{
+				$lookup: {
+					from: "skills",
+					localField: "skills.skill",
+					foreignField: "_id",
+					as: "skillDetails"
+				}
+			},
+			{
+				$addFields: {
+					skills: {
+						$map: {
+							input: "$skills",
+							as: "userSkill",
+							in: {
+								skill: {
+									$arrayElemAt: [
+										{
+											$filter: {
+												input: "$skillDetails",
+												cond: { $eq: ["$$this._id", "$$userSkill.skill"] }
+											}
+										},
+										0
+									]
+								},
+								rating: "$$userSkill.rating",
+								endorsements: "$$userSkill.endorsements"
+							}
+						}
+					}
+				}
+			},
+			{
+				$project: {
+					clerkId: 0,
+					email: 0,
+					contactInfo: 0,
+					skillDetails: 0
+				}
+			},
+			{
+				$sort: { name: 1 }
+			}
+		);
+		
+		const users = await User.aggregate(pipeline);
+		res.json(users);
+	} catch (error) {
+		console.error('Error searching users:', error);
+		res.status(500).json({ error: "Failed to search users" });
+	}
+});
+
 export default router;
