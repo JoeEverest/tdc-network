@@ -93,12 +93,14 @@ Get a specific user's public profile by their Clerk ID.
 ---
 
 ### GET `/user/me`
+
 Get the current user's profile. If the user does not exist, a new user is created from Clerk profile info.
 
 **Authentication Required:** Yes
 
 **Response:**
-```
+
+```json
 {
   "_id": "string",
   "clerkId": "string",
@@ -107,12 +109,15 @@ Get the current user's profile. If the user does not exist, a new user is create
   "skills": [
     {
       "skill": "SkillObjectId",
-      "rating": number,
+      "rating": "number",
       "endorsements": ["UserObjectId"]
     }
   ],
-  "availableForHire": boolean,
-  "contactInfo": { ... },
+  "availableForHire": "boolean",
+  "contactInfo": { 
+    "email": "string",
+    "phone": "string"
+  },
   "createdAt": "ISODate",
   "updatedAt": "ISODate"
 }
@@ -121,54 +126,77 @@ Get the current user's profile. If the user does not exist, a new user is create
 ---
 
 ### PUT `/user/me`
+
 Update the current user's profile info.
 
+**Authentication Required:** Yes
+
 **Request Body:**
-```
+
+```json
 {
   "name": "string",
-  "availableForHire": boolean,
-  "contactInfo": { ... }
+  "availableForHire": "boolean",
+  "contactInfo": { 
+    "email": "string",
+    "phone": "string"
+  }
 }
 ```
+
 **Response:** Same as GET `/user/me`.
 
 ---
 
 ### POST `/user/me/skills`
+
 Add a skill to the current user by skill name and rating.
 
+**Authentication Required:** Yes
+
 **Request Body:**
-```
+
+```json
 {
   "skillName": "string",
-  "rating": number (1-10)
+  "rating": "number" // (1-10)
 }
 ```
+
 **Response:** Same as GET `/user/me`.
 
 ---
 
 ### PUT `/user/me/skills/:skillId`
+
 Update the rating for a specific skill.
 
+**Authentication Required:** Yes
+
 **Request Params:**
+
 - `skillId`: ObjectId of the skill
 
 **Request Body:**
-```
+
+```json
 {
-  "rating": number (1-10)
+  "rating": "number" // (1-10)
 }
 ```
+
 **Response:** Same as GET `/user/me`.
 
 ---
 
 ### DELETE `/user/me/skills/:skillId`
+
 Remove a skill from the current user.
 
+**Authentication Required:** Yes
+
 **Request Params:**
+
 - `skillId`: ObjectId of the skill
 
 **Response:** Same as GET `/user/me`.

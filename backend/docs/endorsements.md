@@ -31,7 +31,7 @@ Create a new endorsement for another user's skill.
   "_id": "string",
   "skill": "ObjectId",
   "endorsedUser": "ObjectId",
-  "endorsedBy": "ObjectId", // Clerk ID of the endorser
+  "endorsedBy": "ObjectId", // MongoDB ObjectId of the endorsing user
   "createdAt": "ISODate"
 }
 ```

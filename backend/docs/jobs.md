@@ -1,11 +1,13 @@
 # Job API Documentation
 
 ## Base Path
+
 `/jobs`
 
 ---
 
 ## Authentication
+
 Most routes require authentication via Clerk. The authenticated user's Clerk ID is used to identify the user in the database.
 
 ---
@@ -13,26 +15,29 @@ Most routes require authentication via Clerk. The authenticated user's Clerk ID 
 ## Endpoints
 
 ### POST `/jobs`
+
 Create a new job posting.
 
 **Authentication Required:** Yes
 
 **Request Body:**
-```
+
+```json
 {
   "title": "string",
   "description": "string",
   "requiredSkills": [
     {
       "skillId": "ObjectId",
-      "minRating": number (1-10)
+      "minRating": number // (1-10)
     }
   ]
 }
 ```
 
 **Response:**
-```
+
+```json
 {
   "_id": "ObjectId",
   "title": "string",
@@ -51,6 +56,7 @@ Create a new job posting.
 ```
 
 **Status Codes:**
+
 - 201: Job created successfully
 - 400: Invalid request (missing fields or invalid format)
 - 404: User not found
@@ -59,29 +65,33 @@ Create a new job posting.
 ---
 
 ### PUT `/jobs/:jobId`
+
 Update an existing job posting.
 
 **Authentication Required:** Yes (must be the job creator)
 
 **URL Parameters:**
+
 - `jobId`: MongoDB ObjectId of the job to update
 
 **Request Body:**
-```
+
+```json
 {
   "title": "string", // Optional
   "description": "string", // Optional
   "requiredSkills": [ // Optional
     {
       "skillId": "ObjectId",
-      "minRating": number (1-10)
+      "minRating": number // (1-10)
     }
   ]
 }
 ```
 
 **Response:**
-```
+
+```json
 {
   "_id": "ObjectId",
   "title": "string",
@@ -100,6 +110,7 @@ Update an existing job posting.
 ```
 
 **Status Codes:**
+
 - 200: Job updated successfully
 - 400: Invalid request format
 - 403: Not authorized to update this job
@@ -109,21 +120,25 @@ Update an existing job posting.
 ---
 
 ### DELETE `/jobs/:jobId`
+
 Delete a job posting.
 
 **Authentication Required:** Yes (must be the job creator)
 
 **URL Parameters:**
+
 - `jobId`: MongoDB ObjectId of the job to delete
 
 **Response:**
-```
+
+```json
 {
   "message": "Job deleted successfully"
 }
 ```
 
 **Status Codes:**
+
 - 200: Job deleted successfully
 - 403: Not authorized to delete this job
 - 404: Job not found
@@ -132,12 +147,14 @@ Delete a job posting.
 ---
 
 ### GET `/jobs`
+
 Get all jobs.
 
 **Authentication Required:** No
 
 **Response:**
-```
+
+```json
 [
   {
     "_id": "ObjectId",
@@ -164,21 +181,25 @@ Get all jobs.
 ```
 
 **Status Codes:**
+
 - 200: Success
 - 500: Server error
 
 ---
 
 ### GET `/jobs/user/:userId`
+
 Get all jobs posted by a specific user.
 
 **Authentication Required:** No
 
 **URL Parameters:**
+
 - `userId`: Clerk ID of the user whose jobs to retrieve
 
 **Response:**
-```
+
+```json
 [
   {
     "_id": "ObjectId",
@@ -202,6 +223,7 @@ Get all jobs posted by a specific user.
 ```
 
 **Status Codes:**
+
 - 200: Success
 - 404: User not found
 - 500: Server error
@@ -209,6 +231,7 @@ Get all jobs posted by a specific user.
 ---
 
 ## Notes
+
 - Only the user who created a job can update or delete it
 - All jobs can be viewed by any user
 - Required skills specify both the skill and the minimum rating required
