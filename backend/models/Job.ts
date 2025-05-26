@@ -1,4 +1,4 @@
-// Job model for Mongoose/TypeScript
+
 import { Schema, model, Types, Document } from "mongoose";
 
 export interface IJobSkillRequirement {

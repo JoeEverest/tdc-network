@@ -1,14 +1,14 @@
-// User (Member) model for Mongoose/TypeScript
+
 import { Schema, model, Types, Document } from "mongoose";
 
 export interface ISkillEntry {
 	skill: Types.ObjectId;
 	rating: number;
-	endorsements: Types.ObjectId[]; // Users who endorsed this skill
+	endorsements: Types.ObjectId[]; 
 }
 
 export interface IUser extends Document {
-	clerkId: string; // Clerk authentication ID
+	clerkId: string; 
 	name: string;
 	email: string;
 	skills: ISkillEntry[];
@@ -19,6 +19,7 @@ export interface IUser extends Document {
 	};
 	createdAt: Date;
 	updatedAt: Date;
+    _id: Types.ObjectId; 
 }
 
 const SkillEntrySchema = new Schema<ISkillEntry>({

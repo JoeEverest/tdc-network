@@ -9,20 +9,20 @@ const router = express.Router();
 // POST /endorsements - Endorse a user for a skill
 router.post("/", requireAuth, async (req: any, res: Response) => {
 	try {
-		const { userId } = req.auth; // Current authenticated user (endorser)
+		const { userId } = req.auth; 
 		const { endorsedUserId, skillId } = req.body;
 
-		// Validate parameters
+		
 		if (!endorsedUserId || !skillId) {
 			return res.status(400).json({ error: "Missing required fields" });
 		}
 
-		// Prevent self-endorsement
+		
 		if (userId === endorsedUserId) {
 			return res.status(400).json({ error: "Cannot endorse yourself" });
 		}
 
-		// Check if user and skill exist
+		
 		const [endorsedUser, skill] = await Promise.all([
 			User.findOne({ clerkId: endorsedUserId }),
 			Skill.findById(skillId),
@@ -36,7 +36,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 			return res.status(404).json({ error: "Skill not found" });
 		}
 
-		// Check if the user has this skill
+		
 		const hasSkill = endorsedUser.skills.some(
 			(s) => s.skill.toString() === skillId
 		);
@@ -47,7 +47,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 			});
 		}
 
-		// Check if endorsement already exists
+		
 		const existingEndorsement = await Endorsement.findOne({
 			endorsedUser: endorsedUser._id,
 			endorsedBy: userId,
@@ -60,14 +60,14 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 			});
 		}
 
-		// Create the endorsement
+		
 		const endorsement = await Endorsement.create({
 			skill: skillId,
 			endorsedUser: endorsedUser._id,
 			endorsedBy: userId,
 		});
 
-		// Add endorsement to user's skill
+		
 		await User.updateOne(
 			{
 				_id: endorsedUser._id,
@@ -139,14 +139,14 @@ router.delete("/:endorsementId", requireAuth, async (req: any, res) => {
 			return res.status(404).json({ error: "Endorsement not found" });
 		}
 
-		// Ensure the user is the one who created the endorsement
+		
 		if (endorsement.endorsedBy.toString() !== userId) {
 			return res.status(403).json({
 				error: "You can only delete endorsements you have given",
 			});
 		}
 
-		// Remove the endorsement from the user's skill
+		
 		await User.updateOne(
 			{
 				_id: endorsement.endorsedUser,

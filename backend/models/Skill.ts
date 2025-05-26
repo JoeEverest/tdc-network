@@ -1,9 +1,9 @@
-// Skill model for Mongoose/TypeScript
+
 import { Schema, model, Document } from "mongoose";
 
 export interface ISkill extends Document {
 	name: string;
-	rating: number; // between 1 and 10
+	rating: number; 
 }
 
 const SkillSchema = new Schema<ISkill>({
