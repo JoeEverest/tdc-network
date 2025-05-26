@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { ErrorMessage } from '@/components/ui/error-message';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
     Search,
     Briefcase,
@@ -14,8 +16,7 @@ import {
     Star,
     Plus,
     Building,
-    Loader2,
-    AlertCircle
+    Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useJobs, useApplyToJob, useUserApplications } from '../hooks/useJobs';
@@ -124,25 +125,17 @@ export function JobsNew() {
 
     // Loading state
     if (jobsLoading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                <span className="ml-2 text-gray-600">Loading jobs...</span>
-            </div>
-        );
+        return <LoadingSpinner message="Loading jobs..." />;
     }
 
     // Error state
     if (jobsError) {
         return (
-            <div className="flex flex-col items-center justify-center py-12">
-                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading jobs</h3>
-                <p className="text-gray-600 mb-4">There was an error loading the job listings.</p>
-                <Button onClick={() => refetchJobs()} variant="outline">
-                    Try Again
-                </Button>
-            </div>
+            <ErrorMessage
+                title="Error loading jobs"
+                message="There was an error loading the job listings."
+                onRetry={() => refetchJobs()}
+            />
         );
     }
 

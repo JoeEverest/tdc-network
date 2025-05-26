@@ -12,7 +12,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useUsers } from '../hooks';
+import { useSearchUsers } from '../hooks';
 import { User as UserType, SearchFilters } from '../types';
 
 const skillOptions = [
@@ -37,7 +37,7 @@ export function MembersNew() {
     }), [selectedSkills, minRating, showAvailableOnly]);
 
     // Use React Query hook to fetch users
-    const { data: members = [], isLoading, error } = useUsers(filters);
+    const { data: members = [], isLoading, error } = useSearchUsers(filters);
 
     const handleAvailabilityChange = (checked: boolean | "indeterminate") => {
         setShowAvailableOnly(checked === true);

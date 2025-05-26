@@ -23,7 +23,7 @@ import {
     useCreateEndorsement,
     useCanEndorse
 } from '../hooks/useEndorsements';
-import { useProfile, useUsers } from '../hooks/useUsers';
+import { useProfile, useSearchUsers } from '../hooks/useUsers';
 import { User as UserType } from '../types';
 
 const skillOptions = [
@@ -61,8 +61,8 @@ export function EndorsementsNew() {
     } = useUserGivenEndorsements(currentUser?._id || '');
 
     // Search for users when typing in member name
-    const { data: searchResults = [] } = useUsers(
-        endorseForm.memberName ? { search: endorseForm.memberName } : {}
+    const { data: searchResults = [] } = useSearchUsers(
+        endorseForm.memberName ? { search: endorseForm.memberName } : undefined
     );
 
     // Check if current user can endorse the selected user and skill

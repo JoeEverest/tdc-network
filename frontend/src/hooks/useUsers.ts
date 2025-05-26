@@ -42,6 +42,17 @@ export const useUsers = () => {
 	});
 };
 
+// Search users with filters
+export const useSearchUsers = (filters?: SearchFilters) => {
+	return useQuery({
+		queryKey: userKeys.list(filters || {}),
+		queryFn: () => userService.searchUsers(filters),
+		staleTime: 2 * 60 * 1000, // 2 minutes
+		keepPreviousData: true,
+		enabled: !!filters && Object.keys(filters).length > 0,
+	});
+};
+
 // Get user skills
 export const useUserSkills = (userId?: string) => {
 	return useQuery({

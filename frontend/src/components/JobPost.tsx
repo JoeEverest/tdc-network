@@ -63,6 +63,31 @@ export function JobPost() {
         minimumRating: 5,
         required: true
     });
+    const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+    // Form validation
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        if (!formData.title.trim()) {
+            newErrors.title = 'Job title is required';
+        }
+        if (!formData.description.trim()) {
+            newErrors.description = 'Job description is required';
+        }
+        if (!formData.contactEmail.trim()) {
+            newErrors.contactEmail = 'Contact email is required';
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
+            newErrors.contactEmail = 'Please enter a valid email address';
+        }
+        if (requirements.length === 0) {
+            newErrors.requirements = 'At least one skill requirement is needed';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     // Add skill requirement
     const handleAddRequirement = () => {
@@ -87,12 +112,11 @@ export function JobPost() {
         e.preventDefault();
 
         if (!currentUser) {
-            alert('You must be logged in to post a job');
+            setErrors({ general: 'You must be logged in to post a job' });
             return;
         }
 
-        if (!formData.title || !formData.description || requirements.length === 0) {
-            alert('Please fill in all required fields and add at least one skill requirement');
+        if (!validateForm()) {
             return;
         }
 
@@ -125,7 +149,7 @@ export function JobPost() {
             navigate('/jobs');
         } catch (error) {
             console.error('Error creating job:', error);
-            alert('Failed to create job. Please try again.');
+            setErrors({ general: 'Failed to create job. Please try again.' });
         }
     };
 
