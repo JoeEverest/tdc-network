@@ -4,9 +4,7 @@ import { requireAuth } from "../middleware/requireAuth";
 import { User, Skill, Endorsement } from "../models";
 import mongoose from "mongoose";
 
-const router = express.Router();
-
-// POST /endorsements - Endorse a user for a skill
+const router = express.Router();	// POST /endorsements - Endorse a user for a skill
 router.post("/", requireAuth, async (req: any, res: Response) => {
 	try {
 		const { userId } = req.auth; 
@@ -23,13 +21,18 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 		}
 
 		
-		const [endorsedUser, skill] = await Promise.all([
+		const [endorsedUser, endorsingUser, skill] = await Promise.all([
 			User.findOne({ clerkId: endorsedUserId }),
+			User.findOne({ clerkId: userId }),
 			Skill.findById(skillId),
 		]);
 
 		if (!endorsedUser) {
 			return res.status(404).json({ error: "Endorsed user not found" });
+		}
+
+		if (!endorsingUser) {
+			return res.status(404).json({ error: "Endorsing user not found" });
 		}
 
 		if (!skill) {
@@ -50,7 +53,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 		
 		const existingEndorsement = await Endorsement.findOne({
 			endorsedUser: endorsedUser._id,
-			endorsedBy: userId,
+			endorsedBy: endorsingUser._id,
 			skill: skillId,
 		});
 
@@ -64,7 +67,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 		const endorsement = await Endorsement.create({
 			skill: skillId,
 			endorsedUser: endorsedUser._id,
-			endorsedBy: userId,
+			endorsedBy: endorsingUser._id,
 		});
 
 		
@@ -74,7 +77,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 				"skills.skill": new mongoose.Types.ObjectId(skillId),
 			},
 			{
-				$push: { "skills.$.endorsements": userId },
+				$push: { "skills.$.endorsements": endorsingUser._id },
 			}
 		);
 
@@ -140,7 +143,13 @@ router.delete("/:endorsementId", requireAuth, async (req: any, res) => {
 		}
 
 		
-		if (endorsement.endorsedBy.toString() !== userId) {
+		const endorsingUser = await User.findOne({ clerkId: userId });
+		if (!endorsingUser) {
+			return res.status(404).json({ error: "Endorsing user not found" });
+		}
+
+		
+		if (endorsement.endorsedBy.toString() !== endorsingUser._id.toString()) {
 			return res.status(403).json({
 				error: "You can only delete endorsements you have given",
 			});
@@ -153,7 +162,7 @@ router.delete("/:endorsementId", requireAuth, async (req: any, res) => {
 				"skills.skill": endorsement.skill,
 			},
 			{
-				$pull: { "skills.$.endorsements": userId },
+				$pull: { "skills.$.endorsements": endorsingUser._id },
 			}
 		);
 
