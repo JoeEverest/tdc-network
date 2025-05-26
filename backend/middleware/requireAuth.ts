@@ -10,13 +10,10 @@ export const requireAuth = (
 	try {
 		const { userId } = getAuth(req);
 
-		console.log("Authenticated user ID:", userId);
-
 		if (!userId) {
 			return res.status(401).json({ error: "Unauthorized" });
 		}
 
-		// User is authenticated, continue
 		next();
 	} catch (error) {
 		console.error("Auth error:", error);
