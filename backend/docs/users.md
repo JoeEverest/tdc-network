@@ -259,6 +259,45 @@ Search for users based on their skills and rating ranges.
 
 ---
 
+## Webhook Endpoints
+
+### POST `/api/webhooks/user-created`
+
+Webhook endpoint for Clerk to call when a new user is created. This automatically creates a user record in the database.
+
+**Authentication Required:** No (but should be configured with Clerk webhook secret)
+
+**Request Body (from Clerk):**
+
+```json
+{
+  "id": "string",
+  "email_addresses": [
+    {
+      "email_address": "string"
+    }
+  ],
+  "first_name": "string",
+  "last_name": "string",
+  "username": "string"
+}
+```
+
+**Response:**
+
+- 200: "OK" - User created successfully
+- 400: Bad request (missing email)
+- 500: Server error
+
+**Notes:**
+
+- This endpoint should be configured in your Clerk Dashboard under Webhooks
+- The webhook URL should be: `https://your-domain.com/api/webhooks/user-created`
+- Users are automatically created when they sign up through Clerk
+- If user already exists, the endpoint returns 200 without creating a duplicate
+
+---
+
 ## Notes
 
 - All responses return the full user object after the operation.
