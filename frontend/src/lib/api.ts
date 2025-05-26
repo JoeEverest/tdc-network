@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
+import { useEffect } from "react";
 
 // Create axios instance
 const api = axios.create({
@@ -9,18 +10,28 @@ const api = axios.create({
 	},
 });
 
-// Hook to get authenticated API client
+// Hook to set up authenticated API client
 export const useApiClient = () => {
 	const { getToken } = useAuth();
 
-	// Add auth token to requests
-	api.interceptors.request.use(async (config) => {
-		const token = await getToken();
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`;
-		}
-		return config;
-	});
+	useEffect(() => {
+		// Clear any existing interceptors to prevent duplicates
+		api.interceptors.request.clear();
+
+		// Add auth token to requests
+		const interceptor = api.interceptors.request.use(async (config) => {
+			const token = await getToken();
+			if (token) {
+				config.headers.Authorization = `Bearer ${token}`;
+			}
+			return config;
+		});
+
+		// Cleanup function to remove interceptor on unmount
+		return () => {
+			api.interceptors.request.eject(interceptor);
+		};
+	}, [getToken]);
 
 	return api;
 };

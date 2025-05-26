@@ -9,9 +9,29 @@ import { ProfileSetupNew } from './components/ProfileSetupNew';
 import { MembersNew } from './components/MembersNew';
 import { JobsNew } from './components/JobsNew';
 import { EndorsementsNew } from './components/EndorsementsNew';
+import { useApiClient } from './lib/api';
 
 // Create a client
 const queryClient = new QueryClient();
+
+// Component to initialize API client when signed in
+function AuthenticatedApp() {
+  // This sets up the auth interceptor for all API calls
+  useApiClient();
+
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/setup" element={<ProfileSetupNew />} />
+      <Route path="/*" element={<AppLayout />}>
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="members" element={<MembersNew />} />
+        <Route path="jobs" element={<JobsNew />} />
+        <Route path="endorsements" element={<EndorsementsNew />} />
+      </Route>
+    </Routes>
+  );
+}
 
 function App() {
   return (
@@ -35,16 +55,7 @@ function App() {
           </SignedOut>
 
           <SignedIn>
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/setup" element={<ProfileSetupNew />} />
-              <Route path="/*" element={<AppLayout />}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="members" element={<MembersNew />} />
-                <Route path="jobs" element={<JobsNew />} />
-                <Route path="endorsements" element={<EndorsementsNew />} />
-              </Route>
-            </Routes>
+            <AuthenticatedApp />
           </SignedIn>
         </div>
       </BrowserRouter>
