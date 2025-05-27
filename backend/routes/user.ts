@@ -227,6 +227,9 @@ router.post("/me/skills", requireAuth, async (req: Request, res: Response) => {
 		}
 
 		const { skillName, rating } = req.body;
+
+		console.log("Adding skill:", skillName, "with rating:", rating);
+
 		let skill = await Skill.findOne({ name: skillName });
 		if (!skill) {
 			skill = await Skill.create({ name: skillName });
