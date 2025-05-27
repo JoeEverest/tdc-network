@@ -17,9 +17,7 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
-import { Input } from "./ui/input";
 import {
     Select,
     SelectContent,
@@ -30,7 +28,6 @@ import {
 import { getUserById } from "../lib/userService";
 import { createEndorsement } from "../lib/endorsementService";
 import { User, UserSkill } from "../types";
-import { useAuth } from "@clerk/clerk-react";
 import { useProfile, useAddSkill, useUpdateSkill, useRemoveSkill } from "../hooks/useUsers";
 
 // Popular skills list for the skill selector
@@ -97,12 +94,13 @@ interface EditSkillFormProps {
 
 function EndorseSkillForm({
     userSkill,
-    currentUser,
     onSuccess,
     onCancel,
 }: EndorseSkillFormProps) {
     const [rating, setRating] = useState(5);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const { userId } = useParams<{ userId: string }>();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -114,7 +112,7 @@ function EndorseSkillForm({
                     ? userSkill.skill
                     : userSkill.skill._id;
             await createEndorsement({
-                endorsedUserId: currentUser._id,
+                endorsedUserId: userId as string,
                 skillId,
             });
             onSuccess();
@@ -353,7 +351,8 @@ function EditSkillForm({
 export function UserProfile() {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
-    const { userId: currentUserId } = useAuth();
+    const { data: userAccount } = useProfile();
+
     const [endorsingSkill, setEndorsingSkill] = useState<UserSkill | null>(null);
     const [addingSkill, setAddingSkill] = useState(false);
     const [editingSkill, setEditingSkill] = useState<UserSkill | null>(null);
@@ -429,7 +428,10 @@ export function UserProfile() {
         );
     }
 
-    const isOwnProfile = currentUserId === user.clerkId;
+    const isOwnProfile = userAccount?._id === user._id
+
+    console.log(userAccount?._id, user._id, "isOwnProfile:", isOwnProfile);
+
     const averageRating =
         user.skills.length > 0
             ? user.skills.reduce((sum, skill) => sum + skill.rating, 0) /
