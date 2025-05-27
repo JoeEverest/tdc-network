@@ -152,11 +152,8 @@ export interface CreateJobData {
 export type UpdateJobData = Partial<CreateJobData>;
 
 export interface CreateEndorsementData {
-	endorserId: string;
-	endorseeId: string;
+	endorsedUserId: string;
 	skillId: string;
-	rating: number; // 1-10 rating
-	comment?: string; // Optional comment
 }
 
 // Alias for JobFilters to match expected naming

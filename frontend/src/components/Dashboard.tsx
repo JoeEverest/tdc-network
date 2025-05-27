@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,12 @@ import {
   useToggleAvailability,
 } from "../hooks";
 import { User } from "../types";
+import { AddSkillModal } from "./AddSkillModal";
 
 export function Dashboard() {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [showAddSkillModal, setShowAddSkillModal] = useState(false);
 
   // Get user profile data
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -88,7 +90,7 @@ export function Dashboard() {
   ];
 
   const quickActions = [
-    { label: "Add Skills", icon: Plus, action: () => navigate("/setup") },
+    { label: "Add Skills", icon: Plus, action: () => setShowAddSkillModal(true) },
     {
       label: "Browse Members",
       icon: Users,
@@ -233,7 +235,7 @@ export function Dashboard() {
               <p className="text-sm text-gray-600 mt-1">
                 Add more skills and get endorsements to improve your visibility.
               </p>
-              <Button size="sm" className="mt-2">
+              <Button size="sm" className="mt-2" onClick={() => setShowAddSkillModal(true)}>
                 Add Skills
               </Button>
             </div>
@@ -249,6 +251,15 @@ export function Dashboard() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Add Skill Modal */}
+      {userProfile?._id && (
+        <AddSkillModal
+          isOpen={showAddSkillModal}
+          onClose={() => setShowAddSkillModal(false)}
+          userId={userProfile._id}
+        />
+      )}
     </div>
   );
 }
