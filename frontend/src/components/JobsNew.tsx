@@ -21,12 +21,11 @@ import {
   Clock,
   Star,
   Plus,
-  Building,
-  Loader2,
+  Building
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useJobs } from "../hooks/useJobs";
-import { useProfile } from "../hooks/useUsers";
+
 import {
   Job,
   JobRequirement,
@@ -76,9 +75,6 @@ export function JobsNew() {
     error: jobsError,
     refetch: refetchJobs,
   } = useJobs(searchFilters);
-
-  // Get current user profile to check skills
-  const { data: currentUser } = useProfile();
 
 
   const skillOptions = [
