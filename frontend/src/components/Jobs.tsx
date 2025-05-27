@@ -149,20 +149,22 @@ export function Jobs() {
     }>;
   }) => {
     // Mock: assume user has some skills with ratings
-    const userSkills: Record<string, number> = {
-      React: 8,
-      TypeScript: 7,
-      "Node.js": 6,
-      Figma: 9,
-      CSS: 8,
-    };
+    // const userSkills: Record<string, number> = {
+    //   React: 8,
+    //   TypeScript: 7,
+    //   "Node.js": 6,
+    //   Figma: 9,
+    //   CSS: 8,
+    // };
 
-    return job.requirements
-      .filter((req: { required: boolean }) => req.required)
-      .every(
-        (req: { skillName: string; minimumRating: number }) =>
-          userSkills[req.skillName] >= req.minimumRating,
-      );
+    // return job.requirements
+    //   .filter((req: { required: boolean }) => req.required)
+    //   .every(
+    //     (req: { skillName: string; minimumRating: number }) =>
+    //       userSkills[req.skillName] >= req.minimumRating,
+    //   );
+
+    return job !== null
   };
 
   return (
@@ -363,11 +365,10 @@ export function Jobs() {
                     {job.requirements.map((req) => (
                       <span
                         key={req.skillName}
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          req.required
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${req.required
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {req.skillName} ({req.minimumRating}/10)
                         {req.required ? " *" : ""}

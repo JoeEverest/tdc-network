@@ -25,14 +25,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useJobs, useApplyToJob, useUserApplications } from "../hooks/useJobs";
+import { useJobs } from "../hooks/useJobs";
 import { useProfile } from "../hooks/useUsers";
 import {
   Job,
   JobRequirement,
-  Application,
+
   JobSearchFilters,
-  UserSkill,
 } from "../types";
 
 export function JobsNew() {
@@ -81,13 +80,6 @@ export function JobsNew() {
   // Get current user profile to check skills
   const { data: currentUser } = useProfile();
 
-  // Get user's applications
-  const { data: userApplications = [] } = useUserApplications(
-    currentUser?._id || "",
-  );
-
-  // Apply to job mutation
-  const applyToJobMutation = useApplyToJob();
 
   const skillOptions = [
     "React",
@@ -115,43 +107,25 @@ export function JobsNew() {
 
   // Check if user can apply to a job based on their skills
   const canApplyToJob = (job: Job) => {
-    if (!currentUser?.skills) return false;
+    // if (!currentUser?.skills) return false;
 
-    // Get user's skills with ratings
-    const userSkills = currentUser.skills.reduce(
-      (acc: Record<string, number>, skill: UserSkill) => {
-        const skillName =
-          typeof skill.skill === "string" ? skill.skill : skill.skill.name;
-        acc[skillName] = skill.rating;
-        return acc;
-      },
-      {},
-    );
+    // // Get user's skills with ratings
+    // const userSkills = currentUser.skills.reduce(
+    //   (acc: Record<string, number>, skill: UserSkill) => {
+    //     const skillName =
+    //       typeof skill.skill === "string" ? skill.skill : skill.skill.name;
+    //     acc[skillName] = skill.rating;
+    //     return acc;
+    //   },
+    //   {},
+    // );
 
-    // Check if user meets minimum requirements for all required skills
-    return job.requirements.every((req) => {
-      const skillName = typeof req.skill === "string" ? req.skill : req.skill;
-      return userSkills[skillName] && userSkills[skillName] >= req.minRating;
-    });
-  };
-
-  // Check if user has already applied to this job
-  const hasApplied = (jobId: string) => {
-    return userApplications.some((app: Application) => app.jobId === jobId);
-  };
-
-  // Handle job application
-  const handleApplyToJob = async (jobId: string) => {
-    if (!currentUser?._id) return;
-
-    try {
-      await applyToJobMutation.mutateAsync({
-        jobId,
-        userId: currentUser._id,
-      });
-    } catch (error) {
-      console.error("Error applying to job:", error);
-    }
+    // // Check if user meets minimum requirements for all required skills
+    // return job.requirements.every((req) => {
+    //   const skillName = typeof req.skill === "string" ? req.skill : req.skill;
+    //   return userSkills[skillName] && userSkills[skillName] >= req.minRating;
+    // });
+    return job !== null
   };
 
   // Loading state
@@ -323,11 +297,7 @@ export function JobsNew() {
                         Remote
                       </span>
                     )}
-                    {hasApplied(job._id || job.id) ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Applied
-                      </span>
-                    ) : canApplyToJob(job) ? (
+                    {canApplyToJob(job) ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         <Star className="h-3 w-3 mr-1" />
                         Eligible
@@ -390,34 +360,7 @@ export function JobsNew() {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 lg:w-auto w-full">
-                {hasApplied(job._id || job.id) ? (
-                  <Button
-                    className="w-full lg:w-auto"
-                    variant="outline"
-                    disabled
-                  >
-                    Applied
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full lg:w-auto"
-                    disabled={
-                      !canApplyToJob(job) || applyToJobMutation.isLoading
-                    }
-                    onClick={() => handleApplyToJob(job._id || job.id)}
-                  >
-                    {applyToJobMutation.isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Applying...
-                      </>
-                    ) : canApplyToJob(job) ? (
-                      "Apply Now"
-                    ) : (
-                      "Skills Required"
-                    )}
-                  </Button>
-                )}
+
                 <Button
                   variant="outline"
                   className="w-full lg:w-auto"
