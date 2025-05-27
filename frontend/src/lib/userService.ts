@@ -100,7 +100,7 @@ export const updateSkill = async (
 	skillId: string,
 	skill: { rating: number }
 ): Promise<User> => {
-	const response = await api.put(`/user/${userId}/skills/${skillId}`, skill);
+	const response = await api.put(`/user/me/skills/${skillId}`, skill);
 	return response.data;
 };
 
@@ -109,7 +109,7 @@ export const removeSkill = async (
 	userId: string,
 	skillId: string
 ): Promise<User> => {
-	const response = await api.delete(`/user/${userId}/skills/${skillId}`);
+	const response = await api.delete(`/user/me/skills/${skillId}`);
 	return response.data;
 };
 
