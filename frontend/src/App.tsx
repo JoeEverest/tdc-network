@@ -10,6 +10,7 @@ import { MembersNew } from './components/MembersNew';
 import { JobsNew } from './components/JobsNew';
 import { JobPost } from './components/JobPost';
 import { EndorsementsNew } from './components/EndorsementsNew';
+import { UserProfile } from './components/UserProfile';
 import { useApiClient } from './lib/api';
 
 // Create a client
@@ -27,6 +28,7 @@ function AuthenticatedApp() {
       <Route path="/*" element={<AppLayout />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="members" element={<MembersNew />} />
+        <Route path="profile/:userId" element={<UserProfile />} />
         <Route path="jobs" element={<JobsNew />} />
         <Route path="jobs/new" element={<JobPost />} />
         <Route path="endorsements" element={<EndorsementsNew />} />

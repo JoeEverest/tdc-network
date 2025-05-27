@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +22,7 @@ const skillOptions = [
 ];
 
 export function MembersNew() {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = React.useState('');
     const [selectedSkills, setSelectedSkills] = React.useState<string[]>([]);
     const [minRating, setMinRating] = React.useState<number>(1);
@@ -245,7 +247,7 @@ export function MembersNew() {
                                                 <span className="ml-1 text-blue-600">
                                                     {userSkill.rating}/10
                                                 </span>
-                                                {userSkill.endorsements.length > 0 && (
+                                                {Array.isArray(userSkill.endorsements) && userSkill.endorsements.length > 0 && (
                                                     <Star className="ml-1 h-3 w-3 text-yellow-500 fill-current" />
                                                 )}
                                             </span>
@@ -267,7 +269,11 @@ export function MembersNew() {
                                         Contact
                                     </Button>
                                 )}
-                                <Button size="sm" variant="outline">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => navigate(`/profile/${member._id}`)}
+                                >
                                     View Profile
                                 </Button>
                             </div>

@@ -1,496 +1,219 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion } from 'motion/react';
-import {
-    Briefcase,
-    Plus,
-    X,
-    MapPin,
-    DollarSign,
-    Star,
-    Loader2,
-    AlertCircle
-} from 'lucide-react';
 import { useCreateJob } from '../hooks/useJobs';
-import { useProfile } from '../hooks/useUsers';
 import { CreateJobData, JobRequirement } from '../types';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
+import { ErrorMessage } from './ui/error-message';
 
 const skillOptions = [
     'React', 'TypeScript', 'Node.js', 'Go', 'Python', 'Java',
     'Docker', 'Kubernetes', 'AWS', 'Figma', 'CSS', 'GraphQL',
     'Vue.js', 'Angular', 'Express.js', 'PostgreSQL', 'MongoDB',
-    'Redis', 'Elasticsearch', 'Jenkins', 'Terraform', 'Swift',
-    'Kotlin', 'Flutter', 'React Native', 'C++', 'C#', '.NET',
-    'Ruby', 'PHP', 'Laravel', 'Django', 'Sass', 'Less',
-    'Tailwind CSS', 'Bootstrap', 'Material-UI', 'Sketch',
-    'Adobe XD', 'Photoshop', 'Illustrator'
+    'Redis', 'Elasticsearch', 'Jenkins', 'Terraform'
 ];
-
-interface JobRequirementForm {
-    skillName: string;
-    minimumRating: number;
-    required: boolean;
-}
 
 export function JobPost() {
     const navigate = useNavigate();
-    const { data: currentUser } = useProfile();
     const createJobMutation = useCreateJob();
 
-    const [formData, setFormData] = React.useState({
-        title: '',
-        description: '',
-        location: '',
-        isRemote: false,
-        companyName: '',
-        contactEmail: currentUser?.email || '',
-        contactPhone: '',
-        salaryMin: '',
-        salaryMax: '',
-        currency: 'USD'
-    });
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [company, setCompany] = useState('');
+    const [location, setLocation] = useState('');
+    const [isRemote, setIsRemote] = useState(false);
+    const [contactEmail, setContactEmail] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
+    const [minSalary, setMinSalary] = useState<number | undefined>(undefined);
+    const [maxSalary, setMaxSalary] = useState<number | undefined>(undefined);
+    const [salaryCurrency, setSalaryCurrency] = useState('USD');
+    const [requiredSkills, setRequiredSkills] = useState<JobRequirement[]>([]);
 
-    const [requirements, setRequirements] = React.useState<JobRequirementForm[]>([]);
-    const [newRequirement, setNewRequirement] = React.useState<JobRequirementForm>({
-        skillName: '',
-        minimumRating: 5,
-        required: true
-    });
-    const [errors, setErrors] = React.useState<Record<string, string>>({});
-
-    // Form validation
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
-
-        if (!formData.title.trim()) {
-            newErrors.title = 'Job title is required';
-        }
-        if (!formData.description.trim()) {
-            newErrors.description = 'Job description is required';
-        }
-        if (!formData.contactEmail.trim()) {
-            newErrors.contactEmail = 'Contact email is required';
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
-            newErrors.contactEmail = 'Please enter a valid email address';
-        }
-        if (requirements.length === 0) {
-            newErrors.requirements = 'At least one skill requirement is needed';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+    const handleAddSkill = () => {
+        setRequiredSkills([...requiredSkills, { skill: '', minRating: 5 }]);
     };
 
-    // Add skill requirement
-    const handleAddRequirement = () => {
-        if (newRequirement.skillName &&
-            !requirements.some(req => req.skillName === newRequirement.skillName)) {
-            setRequirements([...requirements, { ...newRequirement }]);
-            setNewRequirement({
-                skillName: '',
-                minimumRating: 5,
-                required: true
-            });
+    const handleRemoveSkill = (index: number) => {
+        const newSkills = [...requiredSkills];
+        newSkills.splice(index, 1);
+        setRequiredSkills(newSkills);
+    };
+
+    const handleSkillChange = (index: number, field: keyof JobRequirement, value: string | number) => {
+        const newSkills = [...requiredSkills];
+        if (field === 'minRating') {
+            newSkills[index][field] = Number(value);
+        } else {
+            newSkills[index][field] = value as string;
         }
+        setRequiredSkills(newSkills);
     };
 
-    // Remove skill requirement
-    const handleRemoveRequirement = (index: number) => {
-        setRequirements(requirements.filter((_, i) => i !== index));
-    };
-
-    // Submit job posting
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!currentUser) {
-            setErrors({ general: 'You must be logged in to post a job' });
-            return;
-        }
-
-        if (!validateForm()) {
-            return;
-        }
+        const jobData: CreateJobData = {
+            title,
+            description,
+            requiredSkills,
+            contactInfo: {
+                email: contactEmail,
+                phone: contactPhone || undefined,
+                company: company || undefined,
+            },
+            location: location || undefined,
+            isRemote,
+            salaryRange: minSalary && maxSalary ? {
+                min: minSalary,
+                max: maxSalary,
+                currency: salaryCurrency,
+            } : undefined,
+        };
 
         try {
-            const jobData: CreateJobData = {
-                title: formData.title,
-                description: formData.description,
-                requiredSkills: requirements.map((req) => ({
-                    minRating: req.minimumRating,
-                    skill: req.skillName,
-
-                })) as JobRequirement[],
-                contactInfo: {
-                    email: formData.contactEmail,
-                    phone: formData.contactPhone || undefined,
-                    company: formData.companyName || undefined
-                },
-                location: formData.location || undefined,
-                isRemote: formData.isRemote,
-                salaryRange: formData.salaryMin && formData.salaryMax ? {
-                    min: parseInt(formData.salaryMin),
-                    max: parseInt(formData.salaryMax),
-                    currency: formData.currency
-                } : undefined
-            };
-
             await createJobMutation.mutateAsync(jobData);
-
-            // Navigate back to jobs page on success
             navigate('/jobs');
         } catch (error) {
-            console.error('Error creating job:', error);
-            setErrors({ general: 'Failed to create job. Please try again.' });
+            console.error("Failed to create job:", error);
         }
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="outline"
-                    onClick={() => navigate('/jobs')}
-                    className="flex items-center gap-2"
-                >
-                    ← Back to Jobs
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Post a New Job</h1>
-                    <p className="text-gray-600">Find the perfect candidate for your role</p>
-                </div>
-            </div>
-
+        <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Post a New Job</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Basic Information */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Briefcase className="h-5 w-5" />
-                            Job Details
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <Label htmlFor="title">Job Title *</Label>
-                                <Input
-                                    id="title"
-                                    placeholder="e.g. Senior Frontend Developer"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="mt-1"
-                                    required
-                                />
-                            </div>
+                <div>
+                    <Label htmlFor="title">Job Title</Label>
+                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-1" />
+                </div>
 
-                            <div>
-                                <Label htmlFor="company">Company Name</Label>
-                                <Input
-                                    id="company"
-                                    placeholder="e.g. TechCorp Inc."
-                                    value={formData.companyName}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                                    className="mt-1"
-                                />
-                            </div>
+                <div>
+                    <Label htmlFor="description">Job Description</Label>
+                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} required className="mt-1" rows={5} />
+                </div>
 
-                            <div>
-                                <Label htmlFor="location">Location</Label>
-                                <Input
-                                    id="location"
-                                    placeholder="e.g. San Francisco, CA"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                                    className="mt-1"
-                                />
-                            </div>
-                        </div>
+                <div>
+                    <Label htmlFor="company">Company Name</Label>
+                    <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1" />
+                </div>
 
-                        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                            <div>
-                                <Label htmlFor="remote" className="text-base font-medium">
-                                    Remote Work
-                                </Label>
-                                <p className="text-sm text-gray-600">
-                                    This position can be done remotely
-                                </p>
-                            </div>
-                            <Switch
-                                id="remote"
-                                checked={formData.isRemote}
-                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isRemote: checked }))}
-                            />
-                        </div>
+                <div>
+                    <Label htmlFor="location">Location (e.g., &quot;San Francisco, CA&quot; or &quot;Remote&quot;)</Label>
+                    <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1" />
+                </div>
 
-                        <div>
-                            <Label htmlFor="description">Job Description *</Label>
-                            <Textarea
-                                id="description"
-                                placeholder="Describe the role, responsibilities, and what you're looking for in a candidate..."
-                                value={formData.description}
-                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                className="mt-1 min-h-[120px]"
-                                required
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="flex items-center space-x-2">
+                    <Checkbox id="isRemote" checked={isRemote} onCheckedChange={(checked) => setIsRemote(checked === true)} />
+                    <Label htmlFor="isRemote">This job is fully remote</Label>
+                </div>
 
-                {/* Salary Information */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <DollarSign className="h-5 w-5" />
-                            Compensation (Optional)
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h2 className="text-lg font-semibold text-gray-900 pt-4 border-t mt-6">Contact Information</h2>
+                <div>
+                    <Label htmlFor="contactEmail">Contact Email</Label>
+                    <Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required className="mt-1" />
+                </div>
+                <div>
+                    <Label htmlFor="contactPhone">Contact Phone (Optional)</Label>
+                    <Input id="contactPhone" type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="mt-1" />
+                </div>
+
+                <h2 className="text-lg font-semibold text-gray-900 pt-4 border-t mt-6">Salary Range (Optional)</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <Label htmlFor="minSalary">Min Salary</Label>
+                        <Input id="minSalary" type="number" placeholder="e.g., 50000" value={minSalary === undefined ? '' : minSalary} onChange={(e) => setMinSalary(e.target.value ? parseInt(e.target.value) : undefined)} className="mt-1" />
+                    </div>
+                    <div>
+                        <Label htmlFor="maxSalary">Max Salary</Label>
+                        <Input id="maxSalary" type="number" placeholder="e.g., 120000" value={maxSalary === undefined ? '' : maxSalary} onChange={(e) => setMaxSalary(e.target.value ? parseInt(e.target.value) : undefined)} className="mt-1" />
+                    </div>
+                    <div>
+                        <Label htmlFor="salaryCurrency">Currency</Label>
+                        <Select value={salaryCurrency} onValueChange={setSalaryCurrency}>
+                            <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="USD">USD</SelectItem>
+                                <SelectItem value="EUR">EUR</SelectItem>
+                                <SelectItem value="GBP">GBP</SelectItem>
+                                <SelectItem value="CAD">CAD</SelectItem>
+                                <SelectItem value="AUD">AUD</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+
+                <h2 className="text-lg font-semibold text-gray-900 pt-4 border-t mt-6">Required Skills</h2>
+                {requiredSkills.map((skillReq, index) => (
+                    <div key={index} className="space-y-2 p-3 border rounded-md">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="salaryMin">Minimum Salary</Label>
-                                <Input
-                                    id="salaryMin"
-                                    type="number"
-                                    placeholder="80000"
-                                    value={formData.salaryMin}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, salaryMin: e.target.value }))}
-                                    className="mt-1"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="salaryMax">Maximum Salary</Label>
-                                <Input
-                                    id="salaryMax"
-                                    type="number"
-                                    placeholder="120000"
-                                    value={formData.salaryMax}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, salaryMax: e.target.value }))}
-                                    className="mt-1"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="currency">Currency</Label>
-                                <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
-                                    <SelectTrigger className="mt-1">
-                                        <SelectValue />
+                                <Label htmlFor={`skillName-${index}`}>Skill Name</Label>
+                                <Select
+                                    value={skillReq.skill}
+                                    onValueChange={(value) => handleSkillChange(index, 'skill', value)}
+                                >
+                                    <SelectTrigger id={`skillName-${index}`} className="mt-1">
+                                        <SelectValue placeholder="Select skill" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="USD">USD</SelectItem>
-                                        <SelectItem value="EUR">EUR</SelectItem>
-                                        <SelectItem value="GBP">GBP</SelectItem>
-                                        <SelectItem value="CAD">CAD</SelectItem>
+                                        {skillOptions.map(option => (
+                                            <SelectItem key={option} value={option}>
+                                                {option}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Skills Requirements */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Star className="h-5 w-5" />
-                            Skill Requirements *
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Add new requirement */}
-                        <div className="border rounded-lg p-4 bg-gray-50">
-                            <Label className="text-sm font-medium mb-3 block">Add Skill Requirement</Label>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                <div>
-                                    <Select
-                                        value={newRequirement.skillName}
-                                        onValueChange={(value) => setNewRequirement(prev => ({ ...prev, skillName: value }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select skill" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {skillOptions
-                                                .filter(skill => !requirements.some(req => req.skillName === skill))
-                                                .map((skill) => (
-                                                    <SelectItem key={skill} value={skill}>
-                                                        {skill}
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Select
-                                        value={newRequirement.minimumRating.toString()}
-                                        onValueChange={(value) => setNewRequirement(prev => ({ ...prev, minimumRating: parseInt(value) }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Min rating" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
-                                                <SelectItem key={rating} value={rating.toString()}>
-                                                    {rating}/10
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Select
-                                        value={newRequirement.required.toString()}
-                                        onValueChange={(value) => setNewRequirement(prev => ({ ...prev, required: value === 'true' }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="true">Required</SelectItem>
-                                            <SelectItem value="false">Preferred</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button
-                                    type="button"
-                                    onClick={handleAddRequirement}
-                                    disabled={!newRequirement.skillName}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Add
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Current requirements */}
-                        {requirements.length > 0 && (
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium">Current Requirements</Label>
-                                <div className="space-y-2">
-                                    {requirements.map((req, index) => (
-                                        <motion.div
-                                            key={index}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="flex items-center justify-between bg-white border rounded-lg p-3"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <span className="font-medium">{req.skillName}</span>
-                                                <span className="text-sm text-gray-600">
-                                                    Min: {req.minimumRating}/10
-                                                </span>
-                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${req.required
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
-                                                    }`}>
-                                                    {req.required ? 'Required' : 'Preferred'}
-                                                </span>
-                                            </div>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleRemoveRequirement(index)}
-                                                className="text-red-600 hover:text-red-800"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {requirements.length === 0 && (
-                            <div className="text-center py-8 text-gray-500">
-                                <Star className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                                <p>No skill requirements added yet</p>
-                                <p className="text-sm">Add at least one skill requirement for your job posting</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Contact Information */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <MapPin className="h-5 w-5" />
-                            Contact Information
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="contactEmail">Contact Email *</Label>
+                                <Label htmlFor={`minRating-${index}`}>Minimum Rating (1-10)</Label>
                                 <Input
-                                    id="contactEmail"
-                                    type="email"
-                                    placeholder="jobs@company.com"
-                                    value={formData.contactEmail}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
-                                    className="mt-1"
+                                    id={`minRating-${index}`}
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={skillReq.minRating}
+                                    onChange={(e) => handleSkillChange(index, 'minRating', parseInt(e.target.value))}
                                     required
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="contactPhone">Contact Phone</Label>
-                                <Input
-                                    id="contactPhone"
-                                    type="tel"
-                                    placeholder="+1 (555) 123-4567"
-                                    value={formData.contactPhone}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
                                     className="mt-1"
                                 />
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveSkill(index)} className="text-red-500 hover:text-red-700">
+                            <Trash2 className="h-4 w-4 mr-1" /> Remove Skill
+                        </Button>
+                    </div>
+                ))}
+                <Button type="button" variant="outline" onClick={handleAddSkill} className="mt-2">
+                    <PlusCircle className="h-4 w-4 mr-2" /> Add Required Skill
+                </Button>
 
-                {/* Submit */}
-                <div className="flex items-center justify-between pt-6">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate('/jobs')}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        disabled={createJobMutation.isLoading || !formData.title || !formData.description || requirements.length === 0}
-                        className="flex items-center gap-2"
-                    >
+                {createJobMutation.error && (
+                    <ErrorMessage
+                        title="Failed to post job"
+                        message={(createJobMutation.error as Error)?.message || 'An unexpected error occurred.'}
+                    />
+                )}
+
+                <div className="pt-6 border-t mt-6">
+                    <Button type="submit" disabled={createJobMutation.isLoading} className="w-full sm:w-auto">
                         {createJobMutation.isLoading ? (
                             <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                 Posting Job...
                             </>
                         ) : (
-                            <>
-                                <Briefcase className="h-4 w-4" />
-                                Post Job
-                            </>
+                            'Post Job'
                         )}
                     </Button>
                 </div>
-
-                {createJobMutation.error && (
-                    <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                        <AlertCircle className="h-5 w-5" />
-                        <span>Failed to create job. Please try again.</span>
-                    </div>
-                )}
             </form>
         </div>
     );
