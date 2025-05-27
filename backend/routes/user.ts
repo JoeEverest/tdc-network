@@ -46,6 +46,7 @@ router.get("/", async (_req, res) => {
 	}
 });
 
+// GET /search - Search users by skills and rating ranges
 router.get("/search", async (req, res) => {
 	try {
 		const { skills, minRating, maxRating, availableForHire } = req.query;
@@ -324,7 +325,5 @@ router.delete(
 		}
 	}
 );
-
-// GET /search - Search users by skills and rating ranges
 
 export default router;

@@ -39,7 +39,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 
 		console.log("Creating job with required skills:", userId);
 
-		const user = await User.findOne({ clerkId: userId });
+		const user = await User.findById(userId);
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
 		}
@@ -71,7 +71,7 @@ router.put("/:jobId", requireAuth, async (req: any, res: Response) => {
 		const { jobId } = req.params;
 		const { title, description, requiredSkills } = req.body;
 
-		const user = await User.findOne({ clerkId: userId });
+		const user = await User.findById(userId);
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
 		}
@@ -133,7 +133,7 @@ router.delete("/:jobId", requireAuth, async (req: any, res: Response) => {
 		const { userId } = req.auth;
 		const { jobId } = req.params;
 
-		const user = await User.findOne({ clerkId: userId });
+		const user = await User.findById(userId);
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
 		}
@@ -178,7 +178,7 @@ router.get("/user/:userId", async (req: Request, res: Response) => {
 	try {
 		const { userId } = req.params;
 
-		const user = await User.findOne({ clerkId: userId });
+		const user = await User.findById(userId);
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
 		}
