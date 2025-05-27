@@ -11,7 +11,7 @@ const router = express.Router();
 router.post("/", requireAuth, async (req: any, res: Response) => {
 	try {
 		const { userId } = getAuth(req);
-		const { title, description, requiredSkills } = req.body;
+		const { title, description, requiredSkills, contactInfo } = req.body;
 
 		if (!title || !description) {
 			return res
@@ -39,7 +39,7 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 
 		console.log("Creating job with required skills:", userId);
 
-		const user = await User.findById(userId);
+		const user = await User.findOne({ clerkId: userId });
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
 		}
@@ -54,7 +54,11 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 			description,
 			requiredSkills: formattedSkills,
 			postedBy: user._id,
-			applicants: [],
+			contactInfo: {
+				email: contactInfo?.email || user.contactInfo.email,
+				phone: contactInfo?.phone || user.contactInfo.phone,
+				company: contactInfo?.company || "",
+			},
 		});
 
 		return res.status(201).json(job);
