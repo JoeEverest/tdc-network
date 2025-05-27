@@ -90,7 +90,11 @@ export function Dashboard() {
   ];
 
   const quickActions = [
-    { label: "Add Skills", icon: Plus, action: () => setShowAddSkillModal(true) },
+    {
+      label: "Add Skills",
+      icon: Plus,
+      action: () => setShowAddSkillModal(true),
+    },
     {
       label: "Browse Members",
       icon: Users,
@@ -235,7 +239,11 @@ export function Dashboard() {
               <p className="text-sm text-gray-600 mt-1">
                 Add more skills and get endorsements to improve your visibility.
               </p>
-              <Button size="sm" className="mt-2" onClick={() => setShowAddSkillModal(true)}>
+              <Button
+                size="sm"
+                className="mt-2"
+                onClick={() => setShowAddSkillModal(true)}
+              >
                 Add Skills
               </Button>
             </div>
@@ -257,7 +265,6 @@ export function Dashboard() {
         <AddSkillModal
           isOpen={showAddSkillModal}
           onClose={() => setShowAddSkillModal(false)}
-          userId={userProfile._id}
         />
       )}
     </div>

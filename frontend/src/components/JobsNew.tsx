@@ -21,17 +21,12 @@ import {
   Clock,
   Star,
   Plus,
-  Building
+  Building,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useJobs } from "../hooks/useJobs";
 
-import {
-  Job,
-  JobRequirement,
-
-  JobSearchFilters,
-} from "../types";
+import { Job, JobRequirement, JobSearchFilters } from "../types";
 
 export function JobsNew() {
   const navigate = useNavigate();
@@ -75,7 +70,6 @@ export function JobsNew() {
     error: jobsError,
     refetch: refetchJobs,
   } = useJobs(searchFilters);
-
 
   const skillOptions = [
     "React",
@@ -121,7 +115,7 @@ export function JobsNew() {
     //   const skillName = typeof req.skill === "string" ? req.skill : req.skill;
     //   return userSkills[skillName] && userSkills[skillName] >= req.minRating;
     // });
-    return job !== null
+    return job !== null;
   };
 
   // Loading state
@@ -356,7 +350,6 @@ export function JobsNew() {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 lg:w-auto w-full">
-
                 <Button
                   variant="outline"
                   className="w-full lg:w-auto"
