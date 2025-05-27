@@ -26,10 +26,6 @@ router.post("/", requireAuth, async (req: any, res: Response) => {
 			return res.status(400).json({ error: "Cannot endorse yourself" });
 		}
 
-		console.log(
-			endorsedUser?._id.toString() === endorsingUser?._id.toString()
-		);
-
 		if (!endorsedUser) {
 			return res.status(404).json({ error: "Endorsed user not found" });
 		}
