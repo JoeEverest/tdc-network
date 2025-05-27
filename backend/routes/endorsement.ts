@@ -3,26 +3,32 @@ import { Response } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { User, Skill, Endorsement } from "../models";
 import mongoose from "mongoose";
+import { getAuth } from "@clerk/express";
 
 const router = express.Router(); // POST /endorsements - Endorse a user for a skill
 router.post("/", requireAuth, async (req: any, res: Response) => {
 	try {
-		const { userId } = req.auth;
+		const { userId } = getAuth(req);
+
 		const { endorsedUserId, skillId } = req.body;
 
 		if (!endorsedUserId || !skillId) {
 			return res.status(400).json({ error: "Missing required fields" });
 		}
 
-		if (userId === endorsedUserId) {
-			return res.status(400).json({ error: "Cannot endorse yourself" });
-		}
-
 		const [endorsedUser, endorsingUser, skill] = await Promise.all([
-			User.findOne({ clerkId: endorsedUserId }),
+			User.findById(endorsedUserId),
 			User.findOne({ clerkId: userId }),
 			Skill.findById(skillId),
 		]);
+
+		if (endorsedUser?._id.toString() === endorsingUser?._id.toString()) {
+			return res.status(400).json({ error: "Cannot endorse yourself" });
+		}
+
+		console.log(
+			endorsedUser?._id.toString() === endorsingUser?._id.toString()
+		);
 
 		if (!endorsedUser) {
 			return res.status(404).json({ error: "Endorsed user not found" });
