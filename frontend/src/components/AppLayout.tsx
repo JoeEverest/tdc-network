@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,14 +37,14 @@ export function AppLayout() {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
               {navigation.map((item) => (
-                <a
+                <Link
                   key={item.name}
-                  href={item.href}
+                  to={item.href}
                   className="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   <item.icon className="h-4 w-4" />
                   {item.name}
-                </a>
+                </Link>
               ))}
             </nav>
 

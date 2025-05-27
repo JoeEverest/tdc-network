@@ -10,22 +10,88 @@ import {
   Award,
   ThumbsUp,
   MessageCircle,
+  Plus,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { getUserById } from "../lib/userService";
 import { createEndorsement } from "../lib/endorsementService";
 import { User, UserSkill } from "../types";
 import { useAuth } from "@clerk/clerk-react";
-import { useProfile } from "../hooks/useUsers";
+import { useProfile, useAddSkill, useUpdateSkill, useRemoveSkill } from "../hooks/useUsers";
+
+// Popular skills list for the skill selector
+const popularSkills = [
+  "React",
+  "TypeScript",
+  "Node.js",
+  "Python",
+  "Java",
+  "Go",
+  "Rust",
+  "PostgreSQL",
+  "MongoDB",
+  "AWS",
+  "Docker",
+  "Kubernetes",
+  "GraphQL",
+  "Next.js",
+  "Vue.js",
+  "Angular",
+  "React Native",
+  "Flutter",
+  "Swift",
+  "Kotlin",
+  "C++",
+  "C#",
+  ".NET",
+  "Ruby",
+  "PHP",
+  "Laravel",
+  "Django",
+  "Figma",
+  "Sketch",
+  "Adobe XD",
+  "Photoshop",
+  "Illustrator",
+  "CSS",
+  "Sass",
+  "Less",
+  "Tailwind CSS",
+  "Bootstrap",
+  "Material-UI",
+];
 
 interface EndorseSkillFormProps {
   userSkill: UserSkill;
   userId: string;
   currentUser: User;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+interface AddSkillFormProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+  userId: string;
+}
+
+interface EditSkillFormProps {
+  userSkill: UserSkill;
+  userId: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -130,11 +196,196 @@ function EndorseSkillForm({
   );
 }
 
+function AddSkillForm({ onSuccess, onCancel, userId }: AddSkillFormProps) {
+  const [skillName, setSkillName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const addSkillMutation = useAddSkill();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!skillName.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await addSkillMutation.mutateAsync({
+        userId,
+        skill: {
+          skillName: skillName.trim(),
+          rating,
+        },
+      });
+      onSuccess();
+    } catch (error) {
+      console.error("Failed to add skill:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Add New Skill</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="skillName">Skill</Label>
+              <Select value={skillName} onValueChange={setSkillName}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select or type skill" />
+                </SelectTrigger>
+                <SelectContent>
+                  {popularSkills.map((skill) => (
+                    <SelectItem key={skill} value={skill}>
+                      {skill}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                className="mt-2"
+                placeholder="Or type a custom skill..."
+                value={skillName}
+                onChange={(e) => setSkillName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="rating">Self Rating (1-10)</Label>
+              <div className="flex gap-1 mt-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRating(value)}
+                    className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${
+                      value <= rating
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting || !skillName.trim()}>
+                {isSubmitting ? "Adding..." : "Add Skill"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+function EditSkillForm({
+  userSkill,
+  userId,
+  onSuccess,
+  onCancel,
+}: EditSkillFormProps) {
+  const [rating, setRating] = useState(userSkill.rating);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const updateSkillMutation = useUpdateSkill();
+
+  const skillName =
+    typeof userSkill.skill === "string"
+      ? userSkill.skill
+      : userSkill.skill.name;
+  const skillId =
+    typeof userSkill.skill === "string"
+      ? userSkill.skill
+      : userSkill.skill._id;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await updateSkillMutation.mutateAsync({
+        userId,
+        skillId,
+        skill: { rating },
+      });
+      onSuccess();
+    } catch (error) {
+      console.error("Failed to update skill:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Edit Skill: {skillName}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="rating">Self Rating (1-10)</Label>
+              <div className="flex gap-1 mt-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRating(value)}
+                    className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${
+                      value <= rating
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update Skill"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { userId: currentUserId } = useAuth();
   const [endorsingSkill, setEndorsingSkill] = useState<UserSkill | null>(null);
+  const [addingSkill, setAddingSkill] = useState(false);
+  const [editingSkill, setEditingSkill] = useState<UserSkill | null>(null);
+  const removeSkillMutation = useRemoveSkill();
 
   const {
     data: user,
@@ -152,6 +403,31 @@ export function UserProfile() {
   const handleEndorseSuccess = () => {
     setEndorsingSkill(null);
     refetch();
+  };
+
+  const handleAddSkillSuccess = () => {
+    setAddingSkill(false);
+    refetch();
+  };
+
+  const handleEditSkillSuccess = () => {
+    setEditingSkill(null);
+    refetch();
+  };
+
+  const handleRemoveSkill = async (userSkill: UserSkill) => {
+    if (!user || !window.confirm("Are you sure you want to remove this skill?")) return;
+    
+    try {
+      const skillId = typeof userSkill.skill === "string" ? userSkill.skill : userSkill.skill._id;
+      await removeSkillMutation.mutateAsync({
+        userId: user._id,
+        skillId,
+      });
+      refetch();
+    } catch (error) {
+      console.error("Failed to remove skill:", error);
+    }
   };
 
   if (isLoading) {
@@ -269,16 +545,39 @@ export function UserProfile() {
             {/* Skills */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5" />
-                  Skills & Endorsements
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5" />
+                    Skills & Endorsements
+                  </div>
+                  {isOwnProfile && (
+                    <Button
+                      size="sm"
+                      onClick={() => setAddingSkill(true)}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Skill
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {user.skills.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">
-                    No skills listed yet.
-                  </p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">
+                      {isOwnProfile ? "You haven't added any skills yet." : "No skills listed yet."}
+                    </p>
+                    {isOwnProfile && (
+                      <Button
+                        onClick={() => setAddingSkill(true)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Your First Skill
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {user.skills.map((userSkill, index) => {
@@ -306,15 +605,35 @@ export function UserProfile() {
                                   {userSkill.rating}/10
                                 </span>
                               </div>
-                              {!isOwnProfile && currentUser && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setEndorsingSkill(userSkill)}
-                                >
-                                  <ThumbsUp className="h-4 w-4 mr-1" />
-                                  Endorse
-                                </Button>
+                              {isOwnProfile ? (
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setEditingSkill(userSkill)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleRemoveSkill(userSkill)}
+                                    className="text-red-600 hover:text-red-700 hover:border-red-300"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                currentUser && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setEndorsingSkill(userSkill)}
+                                  >
+                                    <ThumbsUp className="h-4 w-4 mr-1" />
+                                    Endorse
+                                  </Button>
+                                )
                               )}
                             </div>
                           </div>
@@ -410,6 +729,25 @@ export function UserProfile() {
           currentUser={currentUser}
           onSuccess={handleEndorseSuccess}
           onCancel={() => setEndorsingSkill(null)}
+        />
+      )}
+
+      {/* Add Skill Modal */}
+      {addingSkill && (
+        <AddSkillForm
+          onSuccess={handleAddSkillSuccess}
+          onCancel={() => setAddingSkill(false)}
+          userId={user._id}
+        />
+      )}
+
+      {/* Edit Skill Modal */}
+      {editingSkill && (
+        <EditSkillForm
+          userSkill={editingSkill}
+          userId={user._id}
+          onSuccess={handleEditSkillSuccess}
+          onCancel={() => setEditingSkill(null)}
         />
       )}
     </div>

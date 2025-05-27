@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import * as userService from "../lib/userService";
-import { Skill, CreateUserData, UpdateUserData, SearchFilters } from "../types";
+import { CreateUserData, UpdateUserData, SearchFilters } from "../types";
 
 // Query keys for caching
 export const userKeys = {
@@ -128,7 +128,7 @@ export const useAddSkill = () => {
       skill,
     }: {
       userId: string;
-      skill: Omit<Skill, "id" | "endorsements">;
+      skill: { skillName: string; rating: number };
     }) => userService.addSkill(userId, skill),
     onSuccess: (_, { userId }) => {
       // Invalidate skills cache
@@ -153,7 +153,7 @@ export const useUpdateSkill = () => {
     }: {
       userId: string;
       skillId: string;
-      skill: Partial<Skill>;
+      skill: { rating: number };
     }) => userService.updateSkill(userId, skillId, skill),
     onSuccess: (_, { userId }) => {
       // Invalidate skills cache
